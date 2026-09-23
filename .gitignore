@@ -1,0 +1,67 @@
+# ==========================================
+# CLion & IDEs
+# ==========================================
+.idea/
+cmake-build-*/
+*.swp
+*~
+.DS_Store
+
+# ==========================================
+# C++ / Build Outputs & Compilers
+# ==========================================
+build/
+bin/
+lib/
+out/
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+
+# CMake build outputs
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Testing/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+
+# ==========================================
+# Vulkan & Shader Compilation
+# ==========================================
+# Compiled SPIR-V shaders (Keep your .vert/.frag/.comp source files!)
+*.spv
+
+# RenderDoc / Profiling dumps
+*.rdc
+*.cap
+
+# Vulkan validation layer logs
+vulkan_layer_dump.txt
+
+# ==========================================
+# Package Managers & Dependencies
+# ==========================================
+# vcpkg
+vcpkg_installed/
+
+# Conan
+conanbuildinfo.*
+conaninfo.txt
+graph_info.json
+
+# ==========================================
+# Temporary & Cache Files
+# ==========================================
+*.log
+*.tmp
+*.bak
