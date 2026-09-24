@@ -13,7 +13,7 @@ using namespace Magma;
     };
 
    void MDebugger::print(const std::string& message , const MESSAGE_TYPE type) {
-       if (debugMode){
+       if (debugMode && !message.empty()) {
        std::string prefix;
        std::string messageColor;
        const std::string resetMessageColor = "\033[0m";
@@ -39,10 +39,6 @@ using namespace Magma;
            timeStr.pop_back();
 
        std::cout << timeStr <<":[" << messageColor << prefix <<  resetMessageColor <<"](Thread:" <<  messageThread <<")"<< message <<std::endl;
-
-           if (MESSAGE_TYPE::ERROR == type) {
-             std::exit(-1);
-           };
-   };
+       };
    };
 
