@@ -1,6 +1,9 @@
 #include "../../../include/Magma/vulkan/VulkanContext.h"
 
 using namespace Magma;
+//Explicit static values declaration
+std::optional<uint32_t> MVulkanContext::graphicsQueueFamilyIndex = std::nullopt;
+std::optional<uint32_t> MVulkanContext::presentQueueFamilyIndex = std::nullopt;
 
 MVulkanContext::MVulkanContext(const std::string& appName,MDebugger& debugger){
     pAppName = appName.c_str();
@@ -12,6 +15,7 @@ MVulkanContext::MVulkanContext(const std::string& appName,MDebugger& debugger){
 
 MVulkanContext::~MVulkanContext() {
     MDebugger::print("Destroying vulkan context . . .");
+    destroyLogicalDevice();
     destroyVulkanInstance();
     MDebugger::print("Destroyed vulkan context.");
 };
@@ -98,6 +102,14 @@ void MVulkanContext::destroyVulkanInstance() {
 }
 
 //Device logic
+void MVulkanContext::createLogicalDevice() {
+
+}
+
+void MVulkanContext::destroyLogicalDevice() {
+    MDebugger::print("Destroying logical device . . .");
+    MDebugger::print("Destroyed logical device.");
+}
 
 void MVulkanContext::selectPhysicalDevice() {
     MDebugger::print("Selecting a physical device.");
@@ -118,6 +130,11 @@ void MVulkanContext::selectPhysicalDevice() {
 
     //Selecting a suitable physical device
     vkPhysicalDevice = scorePhysicalDevices(physicalDevicesList);
+    if (vkPhysicalDevice == VK_NULL_HANDLE) {
+        std::exit(-1); //Change with better error handling !!!
+    }
+    vkGetPhysicalDeviceProperties(vkPhysicalDevice, &vkPhysicalDeviceProperties);
+    vkGetPhysicalDeviceFeatures(vkPhysicalDevice, &vkPhysicalDeviceFeatures);
 }
 
 VkPhysicalDevice MVulkanContext::scorePhysicalDevices(const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList){
@@ -146,49 +163,47 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(const std::vector<VkPhysic
     vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
 
     MDebugger::print("Got the physical device features.");
-
         //Scoring logic
+
         //Mandatory properties and features
-        if (!physicalDeviceFeatures.samplerAnisotropy) {
-            MDebugger::print("The physical device isn't suitable,doesn't support sampler anisotropy.", MESSAGE_TYPE::ERROR);
-            currentPhysicalDeviceScore = 0;
-            continue;
-        }
+        {
+            auto checkMandatoryPhysicalDevicePropertiesAndFeatures = [](const std::string& attributeName ,const bool valueToCheck) {
+                MDebugger::print("Checking " + attributeName + " support . . .");
+                if (valueToCheck) {
+                    MDebugger::print("The physical device supports " + attributeName + ".");
+                    return  true;
+                }else {
+                    MDebugger::print("The device isn't suitable, doesn't support " + attributeName + ".",MESSAGE_TYPE::ERROR);
+                    return false;
+                }
+            };
+            MDebugger::print("Checking for mandatory features and properties . . .");
+            findQueueFamilies(physicalDevice);
+            if (!checkMandatoryPhysicalDevicePropertiesAndFeatures("graphics queue families",graphicsQueueFamilyIndex.has_value()) ||
+            !checkMandatoryPhysicalDevicePropertiesAndFeatures("sampler anisotropy",physicalDeviceFeatures.samplerAnisotropy) ||
+            !checkMandatoryPhysicalDevicePropertiesAndFeatures("independent blend",physicalDeviceFeatures.independentBlend) ||
+            !checkMandatoryPhysicalDevicePropertiesAndFeatures("fillModeNonSolid",physicalDeviceFeatures.fillModeNonSolid) ||
+            !checkMandatoryPhysicalDevicePropertiesAndFeatures("depth clamp",physicalDeviceFeatures.depthClamp) ||
+            !checkMandatoryPhysicalDevicePropertiesAndFeatures("geometry shaders",physicalDeviceFeatures.geometryShader)) {
+                currentPhysicalDeviceScore = 0;
+            }
 
-        if (!physicalDeviceFeatures.independentBlend) {
-            MDebugger::print("The physical device isn't suitable,doesn't support independent blend.", MESSAGE_TYPE::ERROR);
-            currentPhysicalDeviceScore = 0;
-            continue;
         }
-
-        if (!physicalDeviceFeatures.fillModeNonSolid) {
-            MDebugger::print("The physical device isn't suitable,doesn't support fillModeNonSolid.", MESSAGE_TYPE::ERROR);
-            currentPhysicalDeviceScore = 0;
-            continue;
-        }
-
-        if (!physicalDeviceFeatures.depthClamp) {
-            MDebugger::print("The physical device isn't suitable,doesn't support depth clamp", MESSAGE_TYPE::ERROR);
-            currentPhysicalDeviceScore = 0;
-            continue;
-        }
-
-        if (!physicalDeviceFeatures.geometryShader) {
-            MDebugger::print("The physical device isn't suitable,doesn't support geometry shader.", MESSAGE_TYPE::ERROR);
-            currentPhysicalDeviceScore = 0;
-            continue;
-        }
-
         //Optional properties  and features
-        if (physicalDeviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-            currentPhysicalDeviceScore += 1000;
-            MDebugger::print("The physical device is a GPU, score:" + std::to_string(maxPhysicalDeviceScore));
+        {
+
+            auto checkOptionalPhysicalDevicePropertiesAndFeatures = [](const std::string& attributeName ,const bool valueToCheck, const unsigned int pointToAdd) {
+                MDebugger::print("Checking " + attributeName + ". . .");
+                if (valueToCheck) {
+                    MDebugger::print("The physical device has " + attributeName + "(score:+" + std::to_string(pointToAdd) + ").");
+                }
+                return pointToAdd;
+            };
+           currentPhysicalDeviceScore = checkOptionalPhysicalDevicePropertiesAndFeatures("discrete GPU",physicalDeviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,1000)+
+            checkOptionalPhysicalDevicePropertiesAndFeatures("maxImageDimension2D",true,physicalDeviceProperties.limits.maxImageDimension2D/1000)+
+                checkOptionalPhysicalDevicePropertiesAndFeatures("maxSamplerAnisotropy",true,physicalDeviceProperties.limits.maxSamplerAnisotropy * 10)+
+                    checkOptionalPhysicalDevicePropertiesAndFeatures("maxBoundDescriptorSets",true,physicalDeviceProperties.limits.maxBoundDescriptorSets);
         }
-
-        currentPhysicalDeviceScore += physicalDeviceProperties.limits.maxImageDimension2D / 1000 + physicalDeviceProperties.limits.maxSamplerAnisotropy * 10 + physicalDeviceProperties.limits.maxBoundDescriptorSets; //Max 2D texture size + max anisotropic filtering level + how many descriptor sets can be bound at once
-        MDebugger::print("The physical devices: max 2D texture size is " +std::to_string(physicalDeviceProperties.limits.maxImageDimension2D) + ", max anisotropic filtering level is:" + std::to_string(physicalDeviceProperties.limits.maxSamplerAnisotropy) + " and the max bound descriptor sets:" + std::to_string(physicalDeviceProperties.limits.maxBoundDescriptorSets) + ", score:" + std::to_string(maxPhysicalDeviceScore));
-
-
         //Final scoring
         if (currentPhysicalDeviceScore > maxPhysicalDeviceScore) {
         MDebugger::print("Found a new physical device properties, score: " + std::to_string(maxPhysicalDeviceScore) + ",name: " + deviceName);
@@ -201,8 +216,31 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(const std::vector<VkPhysic
     MDebugger::print("Scored all physical devices.");
     if (suitablePhysicalDevice == VK_NULL_HANDLE) {
         MDebugger::print("Couldn't find a suitable physical device.",MESSAGE_TYPE::ERROR);
+        return  VK_NULL_HANDLE;
     }else {
         MDebugger::print("Found a suitable physical device.");
         return suitablePhysicalDevice;
     }
 };
+
+void MVulkanContext::findQueueFamilies(const VkPhysicalDevice &physicalDevice) {
+    MDebugger::print("Finding  the queue families . . .");
+    uint32_t queueFamilyCount{0};
+    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
+
+    for (uint32_t i = 0; i < queueFamilyCount; ++i) {
+        // Check for graphics support
+        if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+           graphicsQueueFamilyIndex = i;
+
+        }
+
+        if (graphicsQueueFamilyIndex.has_value()) {
+            MDebugger::print("Found the graphics queue family: " + std::to_string(i) + ".");
+            return;
+        }
+    }
+    MDebugger::print("Couldn't find the graphics queue family.",MESSAGE_TYPE::ERROR);
+}

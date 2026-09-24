@@ -18,6 +18,7 @@ appName(std::move(appName)){
     };
 
 void MInstance::start() {
+    isRunning = true;
   MDebugger::print("Starting magma instance . . .");
     vulkanContext = new MVulkanContext(appName, *pDebugger);
     MDebugger::print("Created magma instance.");

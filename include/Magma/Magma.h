@@ -16,14 +16,16 @@ namespace Magma {
         explicit  MInstance(std::string  appName = "Magma Application");
         ~MInstance();
 
+        //Magma logic
         void start();
-
+        void stop();
     private:
         //Debugging
         MDebugger* pDebugger{new MDebugger()};
 
         //Instance info
         std::string appName;
+        bool isRunning{false};
 
         //Vulkan logic
         MVulkanContext* vulkanContext{nullptr};
