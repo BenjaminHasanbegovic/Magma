@@ -5,11 +5,11 @@
 using namespace Magma;
 
     MDebugger::MDebugger(){
-        print("Debugger started");
+        print("Debugger started.");
     };
 
     MDebugger::~MDebugger() {
-        print("Debugger destroyed");
+        print("Debugger destroyed.");
     };
 
    void MDebugger::print(const std::string& message , const MESSAGE_TYPE type) {
@@ -39,6 +39,10 @@ using namespace Magma;
            timeStr.pop_back();
 
        std::cout << timeStr <<":[" << messageColor << prefix <<  resetMessageColor <<"](Thread:" <<  messageThread <<")"<< message <<std::endl;
+
+           if (MESSAGE_TYPE::ERROR == type) {
+             std::exit(-1);
+           };
    };
    };
 
