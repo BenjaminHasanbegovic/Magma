@@ -1,5 +1,7 @@
 #include "../../../include/Magma/vulkan/VulkanContext.h"
 
+#include <set>
+
 using namespace Magma;
 //Explicit static values declaration
 std::optional<uint32_t> MVulkanContext::graphicsQueueFamilyIndex = std::nullopt;
@@ -103,11 +105,44 @@ void MVulkanContext::destroyVulkanInstance() {
 
 //Device logic
 void MVulkanContext::createLogicalDevice() {
+MDebugger::print("Creating logical device . . .");
 
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+    const std::set<uint32_t> uniqueQueueFamilies = { graphicsQueueFamilyIndex.value() };
+
+    constexpr float queuePriority = 1.0f;
+    for (const uint32_t queueFamily : uniqueQueueFamilies) {
+        VkDeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = queueFamily;
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+        queueCreateInfos.push_back(queueCreateInfo);
+    }
+
+    VkPhysicalDeviceFeatures deviceFeatures{};
+    deviceFeatures.samplerAnisotropy = VK_TRUE;
+
+    VkDeviceCreateInfo deviceCreateInfo{};
+    deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+    deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+    deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
+    deviceCreateInfo.enabledExtensionCount = 0;
+    deviceCreateInfo.ppEnabledExtensionNames = nullptr;
+    deviceCreateInfo.enabledLayerCount = 0;
+
+    if (vkCreateDevice(vkPhysicalDevice, &deviceCreateInfo, nullptr, &vkLogicalDevice) == VK_SUCCESS) {
+        MDebugger::print("Successfully created logical device.");
+    } else {
+        MDebugger::print("Failed to create logical device!", MESSAGE_TYPE::ERROR);
+    }
 }
 
 void MVulkanContext::destroyLogicalDevice() {
     MDebugger::print("Destroying logical device . . .");
+    vkDestroyDevice(vkLogicalDevice, nullptr);
+    vkLogicalDevice = VK_NULL_HANDLE;
     MDebugger::print("Destroyed logical device.");
 }
 
