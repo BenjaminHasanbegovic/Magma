@@ -17,6 +17,7 @@ namespace Magma {
         ~MInstance();
 
         void start();
+
     private:
         //Debugging
         MDebugger* pDebugger{new MDebugger()};

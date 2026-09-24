@@ -20,6 +20,12 @@ namespace Magma {
         static bool checkInstanceCreationErrors(VkResult result);
         void destroyVulkanInstance();
 
+        //Device logic
+        VkDevice vkLogicalDevice = VK_NULL_HANDLE;
+        VkPhysicalDevice vkPhysicalDevice = VK_NULL_HANDLE;
+        void selectPhysicalDevice();
+        static VkPhysicalDevice scorePhysicalDevices(const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList);
+
         //Debugging
         MDebugger* pDebugger{nullptr};
     };
