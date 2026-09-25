@@ -18,12 +18,6 @@ add_executable(Magma
         main.cpp
         ${SOURCES}
         ${HEADERS}
-        src/Magma/UI/UIManager.cpp
-        include/Magma/UI/UIManager.h
-        src/Magma/UI/UIView.cpp
-        include/Magma/UI/UIView.h
-        src/Magma/UI/UICompiler.cpp
-        include/Magma/UI/UICompiler.h
 )
 
 

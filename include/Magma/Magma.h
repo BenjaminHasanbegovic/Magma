@@ -3,13 +3,12 @@
 #include "Debugger.h"
 class MDebugger;
 
-#include "vulkan/VulkanContext.h"
-class MVulkanContext;
-
+#include "ErrorCodes.h"
 #include <utility>
 #include <string>
 
 namespace Magma {
+    class MVulkanContext;
 
     class MInstance {
     public:
@@ -19,9 +18,19 @@ namespace Magma {
         //Magma logic
         void start();
         void stop();
+
+        //Error handling
+        void tryDestruction(ErrorCode errorCode = ErrorCode::NO_ERRORS);
+        static void requestDestruction(ErrorCode errorCode = ErrorCode::NO_ERRORS);
+        [[nodiscard]] static MInstance* getInstance() { return s_Instance;};
+
     private:
         //Debugging
         MDebugger* pDebugger{new MDebugger()};
+
+        //Magma logic
+        static inline MInstance* s_Instance{nullptr};
+        void destroy();
 
         //Instance info
         std::string appName;

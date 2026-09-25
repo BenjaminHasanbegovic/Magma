@@ -3,7 +3,10 @@
 #include "../Debugger.h"
 class MDebugger;
 
+#include "../ErrorCodes.h"
+
 #include <vulkan/vulkan.h>
+#include <set>
 
 namespace Magma {
     class MVulkanContext {
@@ -45,6 +48,9 @@ namespace Magma {
                 return !formats.empty() && !presentModes.empty();
             }
         };
+
+        //Error handling
+        static ErrorCode errorCode;
 
         //Debugging
         MDebugger* pDebugger{nullptr};
