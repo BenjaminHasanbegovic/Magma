@@ -5,8 +5,24 @@ class MDebugger;
 
 #include "../ErrorCodes.h"
 
-#include <vulkan/vulkan.h>
+
+#include <string>
+#include <vector>
+#include <optional>
 #include <set>
+#include <vulkan/vulkan.h>
+
+#ifdef __linux__
+#include <xcb/xcb.h>
+#include <vulkan/vulkan_xcb.h>
+inline std::vector<const char*> instanceExtensions = {
+    VK_KHR_SURFACE_EXTENSION_NAME,
+    VK_KHR_XCB_SURFACE_EXTENSION_NAME
+};
+#elif defined(_WIN32) || defined(_WIN64)
+#include <vulkan/vulkan.h>
+// ...
+#endif
 
 namespace Magma {
     class MVulkanContext {

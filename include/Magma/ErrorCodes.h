@@ -37,6 +37,7 @@ namespace Magma {
         WINDOW_CREATION_FAILED         = 3000,
         SURFACE_CREATION_FAILED        = 3001,
         WINDOWING_SYSTEM_INIT_FAILED   = 3002,
+        OS_NOT_SUPPORTED = 3003,
 
         // ==========================================
         // Swapchain & Presentation (4000 - 4999)
@@ -98,10 +99,12 @@ namespace Magma {
             case ErrorCode::COMMAND_POOL_CREATION_FAILED: return "COMMAND_POOL_CREATION_FAILED";
             case ErrorCode::INCOMPATIBLE_DRIVER: return "INCOMPATIBLE_DRIVER";
             case ErrorCode::NO_SUITABLE_PHYSICAL_DEVICE: return "NO_SUITABLE_PHYSICAL_DEVICE";
+
             // Window & Surface
             case ErrorCode::WINDOW_CREATION_FAILED: return "WINDOW_CREATION_FAILED";
             case ErrorCode::SURFACE_CREATION_FAILED: return "SURFACE_CREATION_FAILED";
             case ErrorCode::WINDOWING_SYSTEM_INIT_FAILED: return "WINDOWING_SYSTEM_INIT_FAILED";
+                case ErrorCode::OS_NOT_SUPPORTED: return "OS_NOT_SUPPORTED";
 
             // Swapchain & Presentation
             case ErrorCode::SWAPCHAIN_CREATION_FAILED: return "SWAPCHAIN_CREATION_FAILED";

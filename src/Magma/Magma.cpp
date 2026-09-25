@@ -4,8 +4,10 @@
 
 using namespace Magma;
 
-MInstance::MInstance(std::string appName)
-    : appName(std::move(appName)) {
+MInstance::MInstance(std::string appName, const unsigned int newWindowSize[2], WINDOW_MODE newWindowMode)
+    : appName(std::move(appName)), windowMode(newWindowMode) {
+    windowSize[0] = newWindowSize[0];
+    windowSize[1] = newWindowSize[1];
     s_Instance = this;
     MDebugger::print("Initializing magma instance.");
 }
@@ -17,18 +19,19 @@ MInstance::~MInstance() {
     }
 }
 
-void MInstance::requestDestruction(ErrorCode errorCode) {
+void MInstance::requestDestruction(const ErrorCode errorCode) {
     if (s_Instance) {
         s_Instance->tryDestruction(errorCode);
     }
 }
 
 void MInstance::tryDestruction(const ErrorCode errorCode) {
-    MDebugger::print("Destruction requested for magma instance.\nREQUEST REASON: " +
-                     std::string(errorCodeToString(errorCode)) +
-                     " (CODE: " + std::to_string(static_cast<uint32_t>(errorCode)) + ")",
-                     MESSAGE_TYPE::ERROR);
-
+    if (pDebugger) {
+        MDebugger::print("Destruction requested for magma instance.\nREQUEST REASON: " +
+                         std::string(errorCodeToString(errorCode)) +
+                         " (CODE: " + std::to_string(static_cast<uint32_t>(errorCode)) + ")",
+                         MESSAGE_TYPE::ERROR);
+    }
     if (isRunning) {
         stop();
     }
@@ -41,12 +44,15 @@ void MInstance::start() {
 
     vulkanContext = new MVulkanContext(appName, *pDebugger);
 
+    auto windowPtr = MWindowHandler::create(appName, windowMode, windowSize, *pDebugger);
+    windowHandler = windowPtr.release();
+
     if (isRunning) {
         MDebugger::print("Created magma instance.");
-    }else {
+    } else {
         MDebugger::print("Failed to create magma instance.", MESSAGE_TYPE::ERROR);
     }
-};
+}
 
 void MInstance::stop() {
     if (isRunning) {
@@ -58,7 +64,15 @@ void MInstance::stop() {
 }
 
 void MInstance::destroy() {
-    MDebugger::print("Destroying magma instance . . .");
+    if (isDestroyed) {
+        return;
+    }
+    if (pDebugger) {
+        MDebugger::print("Destroying magma instance . . .");
+    }
+
+    delete windowHandler;
+    windowHandler = nullptr;
 
     delete vulkanContext;
     vulkanContext = nullptr;
@@ -67,4 +81,5 @@ void MInstance::destroy() {
     pDebugger = nullptr;
 
     isRunning = false;
+    isDestroyed = true;
 }

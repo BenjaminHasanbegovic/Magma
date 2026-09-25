@@ -1,10 +1,9 @@
 #pragma once
 
 #include "Debugger.h"
-class MDebugger;
-
+#include "./window/windowHandler.h"
 #include "ErrorCodes.h"
-#include <utility>
+
 #include <string>
 
 namespace Magma {
@@ -12,33 +11,36 @@ namespace Magma {
 
     class MInstance {
     public:
-        explicit  MInstance(std::string  appName = "Magma Application");
+        explicit MInstance(std::string appName, const unsigned int newWindowSize[2], WINDOW_MODE newWindowMode);
         ~MInstance();
 
-        //Magma logic
+        // Engine lifecycle
         void start();
         void stop();
 
-        //Error handling
+        // Error handling
         void tryDestruction(ErrorCode errorCode = ErrorCode::NO_ERRORS);
         static void requestDestruction(ErrorCode errorCode = ErrorCode::NO_ERRORS);
-        [[nodiscard]] static MInstance* getInstance() { return s_Instance;};
+        [[nodiscard]] static MInstance* getInstance() { return s_Instance; }
 
     private:
-        //Debugging
+        static inline MInstance* s_Instance{nullptr};
+
+        // Debugging
         MDebugger* pDebugger{new MDebugger()};
 
-        //Magma logic
-        static inline MInstance* s_Instance{nullptr};
+        // State control
         void destroy();
+        bool isDestroyed{false};
 
-        //Instance info
+        // Instance info
         std::string appName;
+        unsigned int windowSize[2]{0, 0};
+        WINDOW_MODE windowMode;
         bool isRunning{false};
 
-        //Vulkan logic
+        // Subsystems
         MVulkanContext* vulkanContext{nullptr};
-
-
+        MWindowHandler* windowHandler{nullptr};
     };
-};
+}

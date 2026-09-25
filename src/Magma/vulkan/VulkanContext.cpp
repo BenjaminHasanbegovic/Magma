@@ -26,18 +26,28 @@ MVulkanContext::~MVulkanContext() {
 //Vulkan instance logic
 void MVulkanContext::createInstance() {
     MDebugger::print("Creating vulkan instance . . .");
-if (errorCode != ErrorCode::NO_ERRORS) {
-    MDebugger::print("Cannot create vulkan instance.",MESSAGE_TYPE::ERROR);
-  return;
-}else {
+    if (errorCode != ErrorCode::NO_ERRORS) {
+        MDebugger::print("Cannot create vulkan instance.", MESSAGE_TYPE::ERROR);
+        return;
+    }
+
     MDebugger::print("Generating app info . . .");
     VkApplicationInfo appInfo {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.apiVersion = VK_MAKE_VERSION(1 , 0 , 0);
-    appInfo.applicationVersion = VK_MAKE_VERSION(1 , 0 , 0);
+    appInfo.apiVersion = VK_API_VERSION_1_0;
+    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.pApplicationName = pAppName;
     appInfo.pNext = nullptr;
-    MDebugger::print("Generated app info.");
+
+    std::vector<const char*> enabledExtensions = {
+        VK_KHR_SURFACE_EXTENSION_NAME
+    };
+
+#ifdef __linux__
+    enabledExtensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
+#elif defined(_WIN32) || defined(_WIN64)
+    enabledExtensions.push_back("VK_KHR_win32_surface");
+#endif
 
     MDebugger::print("Generating instance create info . . .");
     VkInstanceCreateInfo instanceCreateInfo {};
@@ -45,18 +55,16 @@ if (errorCode != ErrorCode::NO_ERRORS) {
     instanceCreateInfo.pApplicationInfo = &appInfo;
     instanceCreateInfo.enabledLayerCount = 0;
     instanceCreateInfo.ppEnabledLayerNames = nullptr;
-    instanceCreateInfo.enabledExtensionCount = 0;
-    instanceCreateInfo.ppEnabledExtensionNames = nullptr;
+    instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
+    instanceCreateInfo.ppEnabledExtensionNames = enabledExtensions.data();
     instanceCreateInfo.pNext = nullptr;
-    MDebugger::print("Generated instance create info.");
 
     if (checkInstanceCreationErrors(vkCreateInstance(&instanceCreateInfo, nullptr, &vkInstance))) {
         MDebugger::print("Created vulkan instance.");
-    }else {
-        MDebugger::print("Failed to create vulkan instance.",MESSAGE_TYPE::ERROR);
+    } else {
+        MDebugger::print("Failed to create vulkan instance.", MESSAGE_TYPE::ERROR);
         MInstance::requestDestruction(errorCode);
     }
-}
 }
 
 bool MVulkanContext::checkInstanceCreationErrors(const VkResult result) {
