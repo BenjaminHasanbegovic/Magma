@@ -36,7 +36,7 @@ namespace Magma {
         //Vulkan instance logic
         VkInstance vkInstance = VK_NULL_HANDLE;
         void createInstance();
-        static bool checkInstanceCreationErrors(VkResult result);
+        bool checkInstanceCreationErrors(VkResult result);
         void destroyVulkanInstance();
 
         //Device logic
@@ -47,12 +47,12 @@ namespace Magma {
         VkPhysicalDeviceProperties vkPhysicalDeviceProperties{};
         VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures{};
         void selectPhysicalDevice();
-        static VkPhysicalDevice scorePhysicalDevices(const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList);
+        VkPhysicalDevice scorePhysicalDevices(const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList);
 
         //Queue logic
         static std::optional<uint32_t> graphicsQueueFamilyIndex;
         static std::optional<uint32_t> presentQueueFamilyIndex;
-        static void findQueueFamilies(const VkPhysicalDevice &physicalDevice);
+        void findQueueFamilies(const VkPhysicalDevice &physicalDevice);
 
         //Swapchain logic
         struct SwapchainSupportDetails {

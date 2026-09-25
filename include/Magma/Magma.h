@@ -27,7 +27,7 @@ namespace Magma {
         static inline MInstance* s_Instance{nullptr};
 
         // Debugging
-        MDebugger* pDebugger{new MDebugger()};
+        MDebugger* pDebugger{nullptr};
 
         // State control
         void destroy();

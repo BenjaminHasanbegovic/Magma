@@ -4,7 +4,7 @@
 
 using namespace Magma;
 
-    MDebugger::MDebugger(){
+    MDebugger::MDebugger(const std::string& id):id(id){
         print("Debugger started.");
     };
 
@@ -38,7 +38,17 @@ using namespace Magma;
            std::string timeStr = std::ctime(&messageTimestamp);
            timeStr.pop_back();
 
-       std::cout << timeStr <<":[" << messageColor << prefix <<  resetMessageColor <<"](Thread:" <<  messageThread <<")"<< message <<std::endl;
+           constexpr auto COLOR_RESET  = "\033[0m";
+           constexpr auto COLOR_GRAY   = "\033[90m";
+           constexpr auto COLOR_CYAN   = "\033[36m";
+           constexpr auto COLOR_BOLD   = "\033[1m";
+
+           std::cout << COLOR_GRAY << timeStr << COLOR_RESET << " : ["
+                     << messageColor << COLOR_BOLD << prefix << COLOR_RESET << "] "
+                     << COLOR_GRAY << "(id:" << COLOR_CYAN << id
+                     << COLOR_GRAY << ", Thread:" << COLOR_CYAN << messageThread
+                     << COLOR_GRAY << ") " << COLOR_RESET
+                     << message << std::endl;
        };
    };
 
