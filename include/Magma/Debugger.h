@@ -18,11 +18,12 @@ namespace Magma {
 
     class MDebugger {
     public:
-        explicit MDebugger();
+        explicit MDebugger(const std::string& id);
     ~MDebugger();
         //Message logic
-        static void print(const std::string& message , MESSAGE_TYPE type = MESSAGE_TYPE::INFO);
+         void print(const std::string& message , MESSAGE_TYPE type = MESSAGE_TYPE::INFO);
 private:
         static constexpr bool debugMode {DEBUG_MODE};
+        std::string id;
 };
 };

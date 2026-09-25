@@ -21,7 +21,7 @@ void MLinuxHandler::initWindow() {
 
  display = XOpenDisplay(nullptr);
  if (display == nullptr) {
-  MDebugger::print("Failed to open X11 display.", MESSAGE_TYPE::ERROR);
+ pDebugger->print("Failed to open X11 display.", MESSAGE_TYPE::ERROR);
   errorCode = ErrorCode::OS_NOT_SUPPORTED;
   MInstance::requestDestruction(errorCode);
   return;
@@ -30,7 +30,7 @@ void MLinuxHandler::initWindow() {
  screen = DefaultScreen(display);
  backgroundColor = BlackPixel(display, screen);
 
-MDebugger::print("Getting needed window data.");
+pDebugger->print("Getting needed window data.");
  window = XCreateSimpleWindow(
      display,
      DefaultRootWindow(display),
@@ -41,10 +41,10 @@ MDebugger::print("Getting needed window data.");
      backgroundColor
  );
 
- MDebugger::print("Setting window properties.");
+ pDebugger->print("Setting window properties.");
  XSetStandardProperties(display, window, appName.c_str(), appName.c_str(), None, nullptr, 0, nullptr);
 
- MDebugger::print("Getting needed window input data.");
+ pDebugger->print("Getting needed window input data.");
  XSelectInput(display, window,
      ExposureMask        |
      KeyPressMask        |
@@ -56,21 +56,21 @@ MDebugger::print("Getting needed window data.");
      FocusChangeMask
  );
 
- MDebugger::print("Getting delete message.");
+ pDebugger->print("Getting delete message.");
  wmDeleteMessage = XInternAtom(display, "WM_DELETE_WINDOW", False);
  XSetWMProtocols(display, window, &wmDeleteMessage, 1);
 
  XMapWindow(display, window);
  XFlush(display);
 
- MDebugger::print("X11 Display initialized successfully.");
+pDebugger->print("X11 Display initialized successfully.");
 }
 
 void MLinuxHandler::pollEvents() {
- MDebugger::print("Polling events . . .");
+ pDebugger->print("Polling events . . .");
 
  if (!display) {
-  MDebugger::print("Couldn't poll events . . .", MESSAGE_TYPE::ERROR);
+  pDebugger->print("Couldn't poll events . . .", MESSAGE_TYPE::ERROR);
   errorCode = ErrorCode::INVALID_ARGUMENT;
   MInstance::requestDestruction(errorCode);
  }else {
@@ -79,7 +79,7 @@ void MLinuxHandler::pollEvents() {
    XNextEvent(display,&event);
    if (event.type == ClientMessage) {
     if (static_cast<Atom>(event.xclient.data.l[0]) == wmDeleteMessage) {
-    MDebugger::print("Window close requested.");
+    pDebugger->print("Window close requested.");
      errorCode = ErrorCode::NO_ERRORS;
      MInstance::requestDestruction(errorCode);
     }
