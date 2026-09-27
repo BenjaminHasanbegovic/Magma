@@ -6,6 +6,8 @@
 #define ERROR_CODE uint32_t
 
 namespace Magma {
+/*The error codes don't have to be use strictly designated operations.
+But it is good to abide with tha labeling. */
 
     enum class ErrorCode :  ERROR_CODE  {
         NO_ERRORS = 0,
@@ -28,8 +30,8 @@ namespace Magma {
         VULKAN_EXTENSION_MISSING       = 2003,
         VULKAN_LAYER_MISSING           = 2004,
         COMMAND_POOL_CREATION_FAILED   = 2005,
-        INCOMPATIBLE_DRIVER              = 2006,
-        NO_SUITABLE_PHYSICAL_DEVICE              = 2007,
+        INCOMPATIBLE_DRIVER            = 2006,
+        NO_SUITABLE_PHYSICAL_DEVICE    = 2007,
 
         /* # =============================================================================
            #  Windows & Surface Errors
@@ -57,7 +59,7 @@ namespace Magma {
         DESCRIPTOR_SET_ALLOCATION_FAILED = 5003,
 
         /* # =============================================================================
-           #  Memory and Buffer Erros
+           #  Memory and Buffer Errors
            # ============================================================================= */
         BUFFER_CREATION_FAILED         = 6000,
         IMAGE_CREATION_FAILED          = 6001,
