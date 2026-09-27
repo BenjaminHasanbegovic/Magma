@@ -2,9 +2,8 @@
 
 #include "../Debugger.h"
 #include "../ErrorCodes.h"
-
 #include <string>
-#include <memory> // For std::unique_ptr
+#include <memory>
 
 namespace Magma {
     enum WINDOW_MODE : unsigned int {
