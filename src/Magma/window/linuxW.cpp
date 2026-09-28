@@ -2,6 +2,9 @@
 
 using namespace Magma;
 
+    /* # =============================================================================
+       #  Class init and destruction
+       # ============================================================================= */
 MLinuxHandler::MLinuxHandler(const std::string& appName, WINDOW_MODE windowMode, const unsigned int windowSize[2], MDebugger& debugger)
     : MWindowHandler(appName, windowMode, windowSize, debugger) {
 

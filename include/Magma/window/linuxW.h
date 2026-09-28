@@ -9,6 +9,9 @@
 namespace Magma {
     class MLinuxHandler : public MWindowHandler {
     public:
+        /* # =============================================================================
+           #  Class init and destruction
+           # ============================================================================= */
         MLinuxHandler(const std::string& appName, WINDOW_MODE windowMode, const unsigned int windowSize[2], MDebugger& debugger);
         ~MLinuxHandler() override;
 
@@ -26,4 +29,4 @@ namespace Magma {
         Window window;
        Atom wmDeleteMessage{0};
     };
-}
+};

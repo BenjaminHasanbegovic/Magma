@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Debugger.h"
+#include "Uitls/Debugger.h"
 #include "./window/windowHandler.h"
-#include "ErrorCodes.h"
+#include "Uitls/ErrorCodes.h"
 #include <string>
 
 namespace Magma {
@@ -18,6 +18,9 @@ namespace Magma {
          # ============================================================================= */
     class MInstance {
     public:
+       /* # =============================================================================
+          #  Class init and destruction
+          # ============================================================================= */
         explicit MInstance(std::string appName, const unsigned int newWindowSize[2], WINDOW_MODE newWindowMode);
         ~MInstance();
 

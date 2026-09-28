@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Debugger.h"
-#include "../ErrorCodes.h"
+#include "../Uitls/Debugger.h"
+#include "../Uitls/ErrorCodes.h"
 #include <string>
 #include <vector>
 #include <optional>
@@ -33,8 +33,12 @@ namespace Magma {
         # ============================================================================= */
     class MVulkanContext {
     public:
+        /* # =============================================================================
+           #  Class init and destruction
+           # ============================================================================= */
         MVulkanContext(const std::string& appName,MDebugger& debugger);
         ~MVulkanContext();
+
     private:
 
         /* # =============================================================================
@@ -76,7 +80,7 @@ namespace Magma {
         /*# =============================================================================
           #  Swapchain
           # ============================================================================= */
-            VkSurfaceCapabilitiesKHR capabilities;
+            VkSurfaceCapabilitiesKHR capabilities{};
             std::vector<VkSurfaceFormatKHR> formats;
             std::vector<VkPresentModeKHR> presentModes;
 
@@ -91,4 +95,4 @@ namespace Magma {
         static ErrorCode errorCode;
         bool checkInstanceCreationErrors(VkResult result) const;
     };
-}
+};

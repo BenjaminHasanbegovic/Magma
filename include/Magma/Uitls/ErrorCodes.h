@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cstdint>
-#include <string_view>
 
 #define ERROR_CODE uint32_t
+
 
 namespace Magma {
 /*The error codes don't have to be use strictly designated operations.
@@ -12,6 +12,7 @@ But it is good to abide with tha labeling. */
     enum class ErrorCode :  ERROR_CODE  {
         NO_ERRORS = 0,
         UNDEFINED_ERROR = 1,
+
         /* # =============================================================================
            #  System & File Errors
            # ============================================================================= */
@@ -68,7 +69,7 @@ But it is good to abide with tha labeling. */
     };
 
           /* # =============================================================================
-             #  Helper Functrions
+             #  Helper Functions
              # ============================================================================= */
 
     [[nodiscard]] constexpr bool isSuccess(const ErrorCode code) noexcept {
@@ -129,5 +130,4 @@ But it is good to abide with tha labeling. */
             default: return "UNKNOWN_ERROR_CODE";
         };
     };
-
 };

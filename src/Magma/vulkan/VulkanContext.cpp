@@ -11,6 +11,9 @@ std::optional<uint32_t> MVulkanContext::graphicsQueueFamilyIndex = std::nullopt;
 std::optional<uint32_t> MVulkanContext::presentQueueFamilyIndex = std::nullopt;
 ErrorCode MVulkanContext::errorCode = ErrorCode::NO_ERRORS;
 
+    /* # =============================================================================
+       #  Class init and destruction
+       # ============================================================================= */
 MVulkanContext::MVulkanContext(const std::string& appName,MDebugger& debugger){
     //Initialize class variables
     pAppName = appName.c_str();

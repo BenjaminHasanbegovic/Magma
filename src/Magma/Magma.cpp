@@ -3,6 +3,9 @@
 
 using namespace Magma;
 
+    /* # =============================================================================
+       #  Class init and destruction
+       # ============================================================================= */
 MInstance::MInstance(std::string appName, const unsigned int newWindowSize[2], WINDOW_MODE newWindowMode)
     : appName(std::move(appName)), windowMode(newWindowMode) {
     //Class value init
