@@ -28,12 +28,24 @@ namespace Magma {
         MWindowHandler(const std::string& appName, WINDOW_MODE windowMode, const unsigned int windowSize[2], MDebugger& debugger);
         virtual ~MWindowHandler();
 
+        /* # =============================================================================
+           #  Window logic (inheritance)
+           # ============================================================================= */
         virtual void initWindow() = 0;
         virtual void pollEvents() = 0;
+
     protected:
+
+        /* # =============================================================================
+           #  Window info
+           # ============================================================================= */
         std::string appName;
         WINDOW_MODE mode;
-        unsigned int size[2];
+        unsigned int size[2]; // [0] width & [1] height
+
+        /* # =============================================================================
+           #  Error handling
+           # ============================================================================= */
         static ErrorCode errorCode;
         MDebugger* pDebugger{nullptr};
     };
