@@ -9,24 +9,37 @@
 namespace Magma {
     class MLinuxHandler : public MWindowHandler {
     public:
+
         /* # =============================================================================
            #  Class init and destruction
            # ============================================================================= */
         MLinuxHandler(const std::string& appName, WINDOW_MODE windowMode, const unsigned int windowSize[2], MDebugger& debugger);
         ~MLinuxHandler() override;
 
+        /* # =============================================================================
+           #  Window logic (inheritance)
+           # ============================================================================= */
         void initWindow() override;
         void pollEvents() override;
 
+        /* # =============================================================================
+           #  Window creation data (getters)
+           # ============================================================================= */
         [[nodiscard]] Display* getX11Display() const { return display; }
         [[nodiscard]] Window getX11Window() const { return window; }
         [[nodiscard]] Atom getWmDeleteMessage() const { return wmDeleteMessage; }
 
     private:
+
+        /* # =============================================================================
+           #  Window creation data (getters)
+           # ============================================================================= */
+        //Essential
         Display* display{nullptr};
         unsigned long int screen{0};
-        unsigned long backgroundColor;
-        Window window;
-       Atom wmDeleteMessage{0};
+        Window window{};
+        Atom wmDeleteMessage{0};
+        //Styling
+        unsigned long backgroundColor{};
     };
 };
