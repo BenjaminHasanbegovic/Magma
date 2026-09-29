@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Vulkan REQUIRED)
-
+find_package(X11 REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(XCB REQUIRED IMPORTED_TARGET xcb)
 
@@ -17,9 +17,7 @@ option(ENABLE_DEBUG "Enable custom debug mode" ON)
 add_executable(Magma
         main.cpp
         ${SOURCES}
-        ${HEADERS}
-)
-
+        ${HEADERS})
 
 target_include_directories(Magma PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -27,6 +25,7 @@ target_include_directories(Magma PRIVATE
 
 target_link_libraries(Magma PRIVATE
         Vulkan::Vulkan
+        X11::X11
         PkgConfig::XCB
 )
 

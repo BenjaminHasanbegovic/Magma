@@ -1,44 +1,67 @@
 #pragma once
 
-#include "Debugger.h"
-class MDebugger;
-
-#include "ErrorCodes.h"
-#include <utility>
+#include "Uitls/Debugger.h"
+#include "./window/windowHandler.h"
+#include "Uitls/ErrorCodes.h"
 #include <string>
 
 namespace Magma {
+    /* # =============================================================================
+       #  External classes
+       # ============================================================================= */
     class MVulkanContext;
+    class MWindowHandler;
+    class MDebugger;
 
+    /* # =============================================================================
+         #  Main class
+         # ============================================================================= */
     class MInstance {
     public:
-        explicit  MInstance(std::string  appName = "Magma Application");
+       /* # =============================================================================
+          #  Class init and destruction
+          # ============================================================================= */
+        explicit MInstance(std::string appName, const unsigned int newWindowSize[2], WINDOW_MODE newWindowMode);
         ~MInstance();
 
-        //Magma logic
+        /* # =============================================================================
+         #  Instance lifecycle
+         # ============================================================================= */
         void start();
         void stop();
 
-        //Error handling
+        /* # =============================================================================
+          #  Error handling
+          # ============================================================================= */
         void tryDestruction(ErrorCode errorCode = ErrorCode::NO_ERRORS);
         static void requestDestruction(ErrorCode errorCode = ErrorCode::NO_ERRORS);
-        [[nodiscard]] static MInstance* getInstance() { return s_Instance;};
+        [[nodiscard]] static MInstance* getInstance() { return s_Instance; }
 
     private:
-        //Debugging
-        MDebugger* pDebugger{new MDebugger()};
+        /* # =============================================================================
+           #  Debugging
+           # ============================================================================= */
+        MDebugger* pDebugger{nullptr};
 
-        //Magma logic
+        /* # =============================================================================
+           #  State control
+           # ============================================================================= */
         static inline MInstance* s_Instance{nullptr};
         void destroy();
-
-        //Instance info
-        std::string appName;
         bool isRunning{false};
+        bool isDestroyed{false};
 
-        //Vulkan logic
+        /* # =============================================================================
+           #  Instance info
+           # ============================================================================= */
+        std::string appName;
+        unsigned int windowSize[2]{0, 0};
+        WINDOW_MODE windowMode;
+
+        /* # =============================================================================
+           #  Subsystems
+           # ============================================================================= */
         MVulkanContext* vulkanContext{nullptr};
-
-
+        MWindowHandler* windowHandler{nullptr};
     };
-};
+}
