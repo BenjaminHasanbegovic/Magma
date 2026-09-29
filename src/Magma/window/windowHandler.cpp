@@ -1,6 +1,9 @@
 #include "../../../include/Magma/window/windowHandler.h"
 #include "../../../include/Magma/Magma.h"
 
+    /* # =============================================================================
+       #  Getting user OS
+       # ============================================================================= */
 #ifdef __linux__
     #include "../../../include/Magma/window/linuxW.h"
 #elif defined(_WIN32) || defined(_WIN64)
@@ -9,12 +12,14 @@
 
 using namespace Magma;
 
+     /* # =============================================================================
+        #  Explicit static values declaration
+        # ============================================================================= */
 ErrorCode MWindowHandler::errorCode = ErrorCode::NO_ERRORS;
-
-
+//Window creation logic
 std::unique_ptr<MWindowHandler> MWindowHandler::create(const std::string& appName, WINDOW_MODE windowMode, const unsigned int windowSize[2], MDebugger& debugger) {
     debugger.print("Initializing window handler . . .");
-
+//OS dependent logic
 #if defined(__linux__)
     debugger.print("Using Linux window handler.");
     return std::make_unique<MLinuxHandler>(appName, windowMode, windowSize, debugger);
@@ -34,15 +39,18 @@ std::unique_ptr<MWindowHandler> MWindowHandler::create(const std::string& appNam
     MInstance::requestDestruction(errorCode);
     return nullptr;
 #endif
-}
+};
 
+/* # =============================================================================
+   #  Class init and destruction
+   # ============================================================================= */
 MWindowHandler::MWindowHandler(const std::string& appName, WINDOW_MODE windowMode, const unsigned int windowSize[2], MDebugger& debugger)
     : appName(appName), mode(windowMode), pDebugger(&debugger) {
     size[0] = windowSize[0];
     size[1] = windowSize[1];
-}
+};
 
 MWindowHandler::~MWindowHandler() {
     pDebugger->print("Destroying window handler . . .");
     pDebugger->print("Destroyed window handler.");
-}
+};

@@ -2,35 +2,43 @@
 
 using namespace Magma;
 
-MLinuxHandler::MLinuxHandler(const std::string& appName, WINDOW_MODE windowMode, const unsigned int windowSize[2], MDebugger& debugger)
+    /* # =============================================================================
+       #  Class init and destruction
+       # ============================================================================= */
+MLinuxHandler::MLinuxHandler(const std::string& appName, const WINDOW_MODE windowMode, const unsigned int windowSize[2], MDebugger& debugger)
     : MWindowHandler(appName, windowMode, windowSize, debugger) {
-
- initWindow();
-}
+    MLinuxHandler::initWindow();
+};
 
 MLinuxHandler::~MLinuxHandler() {
- pDebugger->print("Destroying Linux X11 window . . .");
  if (display != nullptr) {
+  pDebugger->print("Destroying Linux X11 window . . .");
   XCloseDisplay(display);
- }
- pDebugger->print("Destroyed Linux X11 window.");
-}
+  pDebugger->print("Destroyed Linux X11 window.");
+ };
+};
 
+       /* # =============================================================================
+          #  Window creation logic
+          # ============================================================================= */
 void MLinuxHandler::initWindow() {
  pDebugger->print("Initializing X11 Display . . .");
 
+ //Display init &  it's error handling
  display = XOpenDisplay(nullptr);
  if (display == nullptr) {
- pDebugger->print("Failed to open X11 display.", MESSAGE_TYPE::ERROR);
+  pDebugger->print("Failed to open X11 display.", MESSAGE_TYPE::ERROR);
   errorCode = ErrorCode::OS_NOT_SUPPORTED;
   MInstance::requestDestruction(errorCode);
   return;
- }
+ };
 
+ //Screen init
  screen = DefaultScreen(display);
  backgroundColor = BlackPixel(display, screen);
 
-pDebugger->print("Getting needed window data.");
+ //Creating the window
+pDebugger->print("Creating a window.");
  window = XCreateSimpleWindow(
      display,
      DefaultRootWindow(display),
@@ -41,49 +49,57 @@ pDebugger->print("Getting needed window data.");
      backgroundColor
  );
 
+ //Getting the windows properties
  pDebugger->print("Setting window properties.");
  XSetStandardProperties(display, window, appName.c_str(), appName.c_str(), None, nullptr, 0, nullptr);
 
  pDebugger->print("Getting needed window input data.");
  XSelectInput(display, window,
-     ExposureMask        |
-     KeyPressMask        |
-     KeyReleaseMask      |
-     ButtonPressMask     |
-     ButtonReleaseMask   |
-     PointerMotionMask   |
-     StructureNotifyMask |
-     FocusChangeMask
+     ExposureMask        | //Tells the renderer that the window surface needs to be redrawn.
+     KeyPressMask        | //Keyboard key is pushed down.
+     KeyReleaseMask      | //Key is let go.
+     ButtonPressMask     | //Event when a mouse button (left, right, middle, or scroll wheel step) is clicked down.
+     ButtonReleaseMask   | //Event when a mouse button is released.
+     PointerMotionMask   | //Event continuously as long as the mouse cursor moves within the window bounds.
+     StructureNotifyMask | //Event when the window changes size, position, or stacking order.
+     FocusChangeMask       //Events when the user switches to or away from the application.
  );
 
+ //Exit logic
  pDebugger->print("Getting delete message.");
  wmDeleteMessage = XInternAtom(display, "WM_DELETE_WINDOW", False);
  XSetWMProtocols(display, window, &wmDeleteMessage, 1);
 
+ //Final window creation
  XMapWindow(display, window);
  XFlush(display);
-
-pDebugger->print("X11 Display initialized successfully.");
+ pDebugger->print("X11 Display initialized successfully.");
 }
 
 void MLinuxHandler::pollEvents() {
  pDebugger->print("Polling events . . .");
 
- if (!display) {
+ if (!display) {  //Error handling
   pDebugger->print("Couldn't poll events . . .", MESSAGE_TYPE::ERROR);
   errorCode = ErrorCode::INVALID_ARGUMENT;
   MInstance::requestDestruction(errorCode);
  }else {
+  //Essential event polling values
   XEvent event;
+
+  //Main callback loop
   while (XPending(display) > 0) {
+   //Skip to new event
    XNextEvent(display,&event);
+
+   //Window exit method
    if (event.type == ClientMessage) {
     if (static_cast<Atom>(event.xclient.data.l[0]) == wmDeleteMessage) {
     pDebugger->print("Window close requested.");
      errorCode = ErrorCode::NO_ERRORS;
      MInstance::requestDestruction(errorCode);
-    }
-   }
-  }
- }
-}
+    };
+   };
+  };
+ };
+};
