@@ -1,18 +1,25 @@
 #include "../../../include/Magma/window/windowHandler.h"
 #include "../../../include/Magma/Magma.h"
 
+using namespace Magma;
     /* # =============================================================================
        #  Getting user OS
        # ============================================================================= */
 #ifdef __linux__
     #include "../../../include/Magma/window/linuxW.h"
-#elif defined(_WIN32) || defined(_WIN64)
-    // #include "../../../include/Magma/window/windowsW.h"
+     USER_OS MWindowHandler::userOS = LINUX;
+#elif defined(_WIN32)
+  USER_OS MWindowHandler::userOS = WIN_32_BIT;
+#elif defined(_WIN64)
+USER_OS MWindowHandler::userOS = WIN_64_BIT;
+#elif defined(__APPLE__) || defined(__MACH__)
+USER_OS MWindowHandler::userOS = MAC;
+#else
+USER_OS MWindowHandler::userOS = UNSUPPORTED;
 #endif
 
-using namespace Magma;
 
-     /* # =============================================================================
+/* # =============================================================================
         #  Explicit static values declaration
         # ============================================================================= */
 ErrorCode MWindowHandler::errorCode = ErrorCode::NO_ERRORS;

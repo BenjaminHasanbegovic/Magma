@@ -20,7 +20,13 @@ namespace Magma {
            #  Window logic (inheritance)
            # ============================================================================= */
         void initWindow() override;
+        void createWindow() override;
+
+        /* # =============================================================================
+           #  Event logic
+           # ============================================================================= */
         void pollEvents() override;
+        void extractEvents() override;
 
         /* # =============================================================================
            #  Window creation data (getters)

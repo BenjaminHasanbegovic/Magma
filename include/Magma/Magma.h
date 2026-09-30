@@ -61,7 +61,8 @@ namespace Magma {
         /* # =============================================================================
            #  Subsystems
            # ============================================================================= */
-        MVulkanContext* vulkanContext{nullptr};
+        MVulkanContext* pVulkanContext{nullptr};
         MWindowHandler* windowHandler{nullptr};
+        std::unique_ptr<MWindowHandler> pWindowHandler{nullptr};
     };
 }

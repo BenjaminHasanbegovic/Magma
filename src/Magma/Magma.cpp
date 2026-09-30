@@ -12,7 +12,10 @@ MInstance::MInstance(std::string appName, const unsigned int newWindowSize[2], W
     windowSize[0] = newWindowSize[0];
     windowSize[1] = newWindowSize[1];
     s_Instance = this;
+    //Subsystems
     pDebugger = new MDebugger(this->appName);
+    pVulkanContext = new MVulkanContext(appName, *pDebugger);
+    pWindowHandler = MWindowHandler::create(appName, windowMode, windowSize, *pDebugger);
 
     pDebugger->print("Initializing magma instance.");
 }
@@ -24,7 +27,6 @@ MInstance::~MInstance() {
     };
 };
 
-
 /* # =============================================================================
  #  Instance lifecycle
  # ============================================================================= */
@@ -34,11 +36,15 @@ void MInstance::start() {
 
     //Subsystems
     //Vulkan init
-    vulkanContext = new MVulkanContext(appName, *pDebugger);
+    MVulkanContext::setOSExtensions(MWindowHandler::getUserOS());
+    pVulkanContext->createInstance();
+    pVulkanContext->selectPhysicalDevice();
+    pVulkanContext->selectPhysicalDevice();
+    pVulkanContext->createLogicalDevice();
     //Window creation logic
-    auto windowPtr = MWindowHandler::create(appName, windowMode, windowSize, *pDebugger);
-    windowHandler = windowPtr.release();
-
+    windowHandler = pWindowHandler.release();
+    windowHandler->initWindow();
+    windowHandler->createWindow();
     //Error handler
     if (isRunning) {
         pDebugger->print("Created magma instance.");
@@ -71,8 +77,8 @@ void MInstance::destroy() {
     delete windowHandler;
     windowHandler = nullptr;
 
-    delete vulkanContext;
-    vulkanContext = nullptr;
+    delete pVulkanContext;
+    pVulkanContext = nullptr;
 
     delete pDebugger;
     pDebugger = nullptr;

@@ -7,7 +7,7 @@ using namespace Magma;
        # ============================================================================= */
 MLinuxHandler::MLinuxHandler(const std::string& appName, const WINDOW_MODE windowMode, const unsigned int windowSize[2], MDebugger& debugger)
     : MWindowHandler(appName, windowMode, windowSize, debugger) {
-    MLinuxHandler::initWindow();
+ pDebugger->print("Constructed Linux X11 window handler.");
 };
 
 MLinuxHandler::~MLinuxHandler() {
@@ -38,7 +38,7 @@ void MLinuxHandler::initWindow() {
  backgroundColor = BlackPixel(display, screen);
 
  //Creating the window
-pDebugger->print("Creating a window.");
+pDebugger->print("Creating a simple window.");
  window = XCreateSimpleWindow(
      display,
      DefaultRootWindow(display),
@@ -51,9 +51,28 @@ pDebugger->print("Creating a window.");
 
  //Getting the windows properties
  pDebugger->print("Setting window properties.");
- XSetStandardProperties(display, window, appName.c_str(), appName.c_str(), None, nullptr, 0, nullptr);
+ extractEvents();
 
- pDebugger->print("Getting needed window input data.");
+ pDebugger->print("X11 Display initialized successfully.");
+};
+
+void MLinuxHandler::createWindow() {
+ pDebugger->print("Creating Linux X11 window . . .");
+
+ XSetStandardProperties(display, window, appName.c_str(), appName.c_str(), None, nullptr, 0, nullptr);
+ XMapWindow(display, window);
+ XFlush(display);
+
+ created = true;
+
+ pDebugger->print("Created the Linux X11 window.");
+};
+
+    /* # =============================================================================
+       #  Event logic
+       # ============================================================================= */
+void MLinuxHandler::extractEvents() {
+ pDebugger->print("Extracting needed window events.");
  XSelectInput(display, window,
      ExposureMask        | //Tells the renderer that the window surface needs to be redrawn.
      KeyPressMask        | //Keyboard key is pushed down.
@@ -69,12 +88,7 @@ pDebugger->print("Creating a window.");
  pDebugger->print("Getting delete message.");
  wmDeleteMessage = XInternAtom(display, "WM_DELETE_WINDOW", False);
  XSetWMProtocols(display, window, &wmDeleteMessage, 1);
-
- //Final window creation
- XMapWindow(display, window);
- XFlush(display);
- pDebugger->print("X11 Display initialized successfully.");
-}
+};
 
 void MLinuxHandler::pollEvents() {
  pDebugger->print("Polling events . . .");

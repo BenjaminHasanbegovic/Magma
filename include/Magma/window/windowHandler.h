@@ -15,6 +15,14 @@ namespace Magma {
         BORDERLESS_FULL_SCREEN = 2,
         OVERLAY = 3,
     };
+
+   enum USER_OS : unsigned int {
+      UNSUPPORTED = 0,
+      LINUX = 1,
+      WIN_32_BIT = 2,
+      WIN_64_BIT = 3,
+      MAC = 4,
+  };
             /* # =============================================================================
                #  Main class
                # ============================================================================= */
@@ -32,13 +40,21 @@ namespace Magma {
            #  Window logic (inheritance)
            # ============================================================================= */
         virtual void initWindow() = 0;
+        virtual void createWindow() = 0;
+         static USER_OS getUserOS() {return userOS;};
+        /* # =============================================================================
+           #  Event logic
+           # ============================================================================= */
         virtual void pollEvents() = 0;
+        virtual void extractEvents() = 0;
 
     protected:
 
         /* # =============================================================================
            #  Window info
            # ============================================================================= */
+        static USER_OS userOS;
+        bool created { false };
         std::string appName;
         WINDOW_MODE mode;
         unsigned int size[2]; // [0] width & [1] height
