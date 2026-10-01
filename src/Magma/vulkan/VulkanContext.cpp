@@ -39,12 +39,6 @@ MVulkanContext::~MVulkanContext() {
 void MVulkanContext::createInstance() {
     pDebugger->print("Creating vulkan instance . . .");
 
-    //Stop the Vulkan instance creation if there any errors
-    if (errorCode != ErrorCode::NO_ERRORS) {
-        pDebugger->print("Cannot create vulkan instance.", MESSAGE_TYPE::ERROR);
-        return;
-    }
-
     //Define data needed for creation info of Vulkan Instance
     pDebugger->print("Generating app info . . .");
     VkApplicationInfo appInfo {};
@@ -69,8 +63,7 @@ void MVulkanContext::createInstance() {
     if (checkInstanceCreationErrors(vkCreateInstance(&instanceCreateInfo, nullptr, &vkInstance))) {
        pDebugger->print("Created vulkan instance.");
     } else {
-       pDebugger->print("Failed to create vulkan instance.", MESSAGE_TYPE::ERROR);
-        MInstance::requestDestruction(errorCode); //The error code was set in the scoring physical device method
+        throw std::runtime_error("Failed to create vulkan instance:" + errorCodeToString(errorCode));
     };
 };
 
@@ -93,6 +86,9 @@ void MVulkanContext::setOSExtensions(const USER_OS OS,const std::vector<const ch
         for (auto extension : extensions) {
             enabledExtensions.push_back(extension);
         }
+    }else {
+        errorCode = ErrorCode::OS_NOT_SUPPORTED;
+        throw std::runtime_error("Failed to set OSExtensions:" + errorCodeToString(errorCode));
     }
 };
 
@@ -101,12 +97,6 @@ void MVulkanContext::setOSExtensions(const USER_OS OS,const std::vector<const ch
    # ============================================================================= */
 void MVulkanContext::createLogicalDevice() {
 pDebugger->print("Creating logical device . . .");
-
-    //Error handling
-if (errorCode != ErrorCode::NO_ERRORS) {
-    pDebugger->print("Cannot create logical device.",MESSAGE_TYPE::ERROR);
-    return;
-};
 
     //Values needed to create logical device
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -141,9 +131,8 @@ if (errorCode != ErrorCode::NO_ERRORS) {
     if (vkCreateDevice(vkPhysicalDevice, &deviceCreateInfo, nullptr, &vkLogicalDevice) == VK_SUCCESS) {
         pDebugger->print("Successfully created logical device.");
     } else {
-        pDebugger->print("Failed to create logical device!", MESSAGE_TYPE::ERROR);
         errorCode = ErrorCode::LOGICAL_DEVICE_CREATION_FAILED;
-        MInstance::requestDestruction(errorCode);
+        throw std::runtime_error("Failed to crate logical device: " + errorCodeToString(errorCode));
     };
 };
 
@@ -164,10 +153,7 @@ void MVulkanContext::destroyLogicalDevice() {
    # ============================================================================= */
 void MVulkanContext::selectPhysicalDevice() {
     pDebugger->print("Selecting a physical device.");
-    if (errorCode != ErrorCode::NO_ERRORS) {
-        pDebugger->print("Cannot select physical device",MESSAGE_TYPE::ERROR);
-        return;
-    }else {
+
         //Getting the data of all physical devices
         pDebugger->print("Getting all physical device . . .");
 
@@ -177,10 +163,9 @@ void MVulkanContext::selectPhysicalDevice() {
         if (physicalDeviceCount > 0) {
             pDebugger->print("Found " + std::to_string(physicalDeviceCount) + " physical device(s).");
         }else {
-            pDebugger->print("Failed to find physical device with Vulkan support!",MESSAGE_TYPE::ERROR);
-            errorCode = ErrorCode::PHYSICAL_DEVICE_NOT_FOUND;
-            MInstance::requestDestruction(errorCode);
-        }
+            errorCode = ErrorCode::NO_PHYSICAL_DEVICES_FOUND;
+            throw std::runtime_error("Failed to find physical device with Vulkan support: " + errorCodeToString(errorCode));
+        };
 
         std::vector<VkPhysicalDevice> physicalDevicesList(physicalDeviceCount);
         vkEnumeratePhysicalDevices(vkInstance, &physicalDeviceCount, physicalDevicesList.data());
@@ -190,9 +175,11 @@ void MVulkanContext::selectPhysicalDevice() {
         if (vkPhysicalDevice != VK_NULL_HANDLE) {
             vkGetPhysicalDeviceProperties(vkPhysicalDevice, &vkPhysicalDeviceProperties);
             vkGetPhysicalDeviceFeatures(vkPhysicalDevice, &vkPhysicalDeviceFeatures);
+        }else {
+            throw std::runtime_error("Failed to find suitable physical device: " + errorCodeToString(errorCode));
         }
-    }
-}
+    };
+
 
 VkPhysicalDevice MVulkanContext::scorePhysicalDevices(const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList) const {
     pDebugger->print("Scoring a physical devices . . .");
@@ -283,9 +270,7 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(const std::vector<VkPhysic
     pDebugger->print("Scored all physical devices.");
 
     if (suitablePhysicalDevice == VK_NULL_HANDLE) {
-       pDebugger->print("Couldn't find a suitable physical device.",MESSAGE_TYPE::ERROR);
         errorCode = ErrorCode::NO_SUITABLE_PHYSICAL_DEVICE;
-        MInstance::requestDestruction(errorCode);
         return  VK_NULL_HANDLE;
     }else {
         pDebugger->print("Found a suitable physical device.");
@@ -311,9 +296,11 @@ void MVulkanContext::findMandatoryQueueFamilies(const VkPhysicalDevice &physical
         if (graphicsQueueFamilyIndex.has_value()) {
             pDebugger->print("Found the graphics queue family,index: " + std::to_string(i) + ".");
             return;
+        }else {
+            errorCode = ErrorCode::NO_GRAPHICAL_QUEUE_INDEX_FOUND;
+          throw std::runtime_error("Couldn't find the graphics queue family: " + errorCodeToString(errorCode));
         };
     };
-    pDebugger->print("Couldn't find the graphics queue family.",MESSAGE_TYPE::ERROR);
 };
 
      /* # =============================================================================

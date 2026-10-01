@@ -60,7 +60,7 @@ namespace Magma {
         bool created { false };
         std::string appName;
         WINDOW_MODE mode;
-        unsigned int size[2]; // [0] width & [1] height
+        unsigned int size[2]{}; // [0] width & [1] height
 
         /* # =============================================================================
            #  Error handling

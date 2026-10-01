@@ -49,9 +49,8 @@ std::unique_ptr<MWindowHandler> MWindowHandler::create(const std::string& appNam
      return std::make_unique<MMacHandler>(appName, windowMode, windowSize, debugger);
 
 #else
-    debugger.print("The OS isn't supported.", MESSAGE_TYPE::ERROR);
     errorCode = ErrorCode::OS_NOT_SUPPORTED;
-    MInstance::requestDestruction(errorCode);
+    throw std::runtime_error("The OS isn't supported.");
     return nullptr;
 #endif
 };

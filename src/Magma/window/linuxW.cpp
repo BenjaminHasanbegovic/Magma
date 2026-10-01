@@ -27,9 +27,8 @@ void MLinuxHandler::initWindow() {
  //Display init &  it's error handling
  display = XOpenDisplay(nullptr);
  if (display == nullptr) {
-  pDebugger->print("Failed to open X11 display.", MESSAGE_TYPE::ERROR);
   errorCode = ErrorCode::OS_NOT_SUPPORTED;
-  MInstance::requestDestruction(errorCode);
+  throw std::runtime_error("Failed to open X11 display: " + errorCodeToString(errorCode));
   return;
  };
 
@@ -93,12 +92,7 @@ void MLinuxHandler::extractEvents() {
 void MLinuxHandler::pollEvents() {
  pDebugger->print("Polling events . . .");
 
- if (!display) {  //Error handling
-  pDebugger->print("Couldn't poll events . . .", MESSAGE_TYPE::ERROR);
-  errorCode = ErrorCode::INVALID_ARGUMENT;
-  MInstance::requestDestruction(errorCode);
- }else {
-  //Essential event polling values
+ //Essential event polling values
   XEvent event;
 
   //Main callback loop
@@ -110,10 +104,8 @@ void MLinuxHandler::pollEvents() {
    if (event.type == ClientMessage) {
     if (static_cast<Atom>(event.xclient.data.l[0]) == wmDeleteMessage) {
     pDebugger->print("Window close requested.");
-     errorCode = ErrorCode::NO_ERRORS;
      MInstance::requestDestruction(errorCode);
     };
    };
   };
  };
-};
