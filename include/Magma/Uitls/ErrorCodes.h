@@ -1,9 +1,6 @@
 #pragma once
 
-#include <cstdint>
-
 #define ERROR_CODE uint32_t
-
 
 namespace Magma {
 /*The error codes don't have to be use strictly designated operations.
@@ -33,6 +30,8 @@ But it is good to abide with tha labeling. */
         COMMAND_POOL_CREATION_FAILED   = 2005,
         INCOMPATIBLE_DRIVER            = 2006,
         NO_SUITABLE_PHYSICAL_DEVICE    = 2007,
+        NO_PHYSICAL_DEVICES_FOUND      = 2008,
+        NO_GRAPHICAL_QUEUE_INDEX_FOUND = 2009,
 
         /* # =============================================================================
            #  Windows & Surface Errors
@@ -101,6 +100,8 @@ But it is good to abide with tha labeling. */
             case ErrorCode::COMMAND_POOL_CREATION_FAILED: return "COMMAND_POOL_CREATION_FAILED";
             case ErrorCode::INCOMPATIBLE_DRIVER: return "INCOMPATIBLE_DRIVER";
             case ErrorCode::NO_SUITABLE_PHYSICAL_DEVICE: return "NO_SUITABLE_PHYSICAL_DEVICE";
+            case ErrorCode::NO_PHYSICAL_DEVICES_FOUND: return "NO_PHYSICAL_DEVICES_FOUND";
+            case ErrorCode::NO_GRAPHICAL_QUEUE_INDEX_FOUND : return "NO_GRAPHICAL_QUEUE_INDEX_FOUND";
 
             // Window & Surface
             case ErrorCode::WINDOW_CREATION_FAILED: return "WINDOW_CREATION_FAILED";
@@ -127,7 +128,7 @@ But it is good to abide with tha labeling. */
             case ErrorCode::MEMORY_ALLOCATION_FAILED: return "MEMORY_ALLOCATION_FAILED";
             case ErrorCode::MEMORY_MAP_FAILED: return "MEMORY_MAP_FAILED";
 
-            default: return "UNKNOWN_ERROR_CODE";
+            default: return "ERROR_CODE: " + std::to_string(static_cast<int>(code));
         };
     };
 };
