@@ -12,7 +12,10 @@ MInstance::MInstance(std::string appName, const unsigned int newWindowSize[2], W
     windowSize[0] = newWindowSize[0];
     windowSize[1] = newWindowSize[1];
     s_Instance = this;
+    //Subsystems
     pDebugger = new MDebugger(this->appName);
+    pVulkanContext = new MVulkanContext(appName, *pDebugger);
+    pInitialWindowHandler = MWindowHandler::create(appName, windowMode, windowSize, *pDebugger);
 
     pDebugger->print("Initializing magma instance.");
 }
@@ -24,7 +27,6 @@ MInstance::~MInstance() {
     };
 };
 
-
 /* # =============================================================================
  #  Instance lifecycle
  # ============================================================================= */
@@ -34,17 +36,20 @@ void MInstance::start() {
 
     //Subsystems
     //Vulkan init
-    vulkanContext = new MVulkanContext(appName, *pDebugger);
-    //Window creation logic
-    auto windowPtr = MWindowHandler::create(appName, windowMode, windowSize, *pDebugger);
-    windowHandler = windowPtr.release();
+    try {
+        MVulkanContext::setOSExtensions(MWindowHandler::getUserOS(),MWindowHandler::getOSSpecificExtensions());
+        pVulkanContext->createInstance();
+        pVulkanContext->selectPhysicalDevice();
+        pVulkanContext->createLogicalDevice();
+        //Window creation logic
+        pWindowHandler = pInitialWindowHandler.release();
+        pWindowHandler->initWindow();
+        pWindowHandler->createWindow();
 
-    //Error handler
-    if (isRunning) {
         pDebugger->print("Created magma instance.");
-    } else {
-        pDebugger->print("Failed to create magma instance.", MESSAGE_TYPE::ERROR);
-    };
+    }catch (std::exception& e) {
+        pDebugger->print(std::string("Initialization aborted:\n ") + e.what(), MESSAGE_TYPE::ERROR);
+    }
 };
 
 void MInstance::stop() {
@@ -52,7 +57,7 @@ void MInstance::stop() {
         isRunning = false;
         pDebugger->print("Stopped magma instance.");
     } else {
-        pDebugger->print("The magma instance is not running; cannot stop.", MESSAGE_TYPE::WARNING);
+        pDebugger->print("The magma instance is not running, cannot stop.", MESSAGE_TYPE::WARNING);
     };
 };
 
@@ -68,11 +73,14 @@ void MInstance::destroy() {
         pDebugger->print("Destroying magma instance . . .");
     }
     //The order of destruction is important
-    delete windowHandler;
-    windowHandler = nullptr;
+    pInitialWindowHandler.reset();
+    pInitialWindowHandler = nullptr;
 
-    delete vulkanContext;
-    vulkanContext = nullptr;
+    delete pWindowHandler;
+    pWindowHandler = nullptr;
+
+    delete pVulkanContext;
+    pVulkanContext = nullptr;
 
     delete pDebugger;
     pDebugger = nullptr;
