@@ -44,7 +44,7 @@ namespace Magma {
         /* # =============================================================================
            #  Os handling
            # ============================================================================= */
-            static void setOSExtensions(USER_OS OS);
+            static void setOSExtensions(USER_OS OS,const std::vector<const char*>& extensions);
 
 
     private:
@@ -78,7 +78,7 @@ namespace Magma {
         VkPhysicalDevice vkPhysicalDevice = VK_NULL_HANDLE;
         VkPhysicalDeviceProperties vkPhysicalDeviceProperties{};
         VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures{};
-        VkPhysicalDevice scorePhysicalDevices(const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList) const;
+        [[nodiscard]] VkPhysicalDevice scorePhysicalDevices(const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList) const;
 
         /*# =============================================================================
           #  Device queue

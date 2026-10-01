@@ -36,9 +36,8 @@ void MInstance::start() {
 
     //Subsystems
     //Vulkan init
-    MVulkanContext::setOSExtensions(MWindowHandler::getUserOS());
+    MVulkanContext::setOSExtensions(MWindowHandler::getUserOS(),MWindowHandler::getOSSpecificExtensions());
     pVulkanContext->createInstance();
-    pVulkanContext->selectPhysicalDevice();
     pVulkanContext->selectPhysicalDevice();
     pVulkanContext->createLogicalDevice();
     //Window creation logic

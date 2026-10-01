@@ -4,6 +4,7 @@
 #include "../Uitls/ErrorCodes.h"
 #include <string>
 #include <memory>
+#include <vector>
 
 namespace Magma {
             /* # =============================================================================
@@ -42,6 +43,7 @@ namespace Magma {
         virtual void initWindow() = 0;
         virtual void createWindow() = 0;
          static USER_OS getUserOS() {return userOS;};
+        static std::vector<const char*>  getOSSpecificExtensions() {return OSSpecificExtensions;};
         /* # =============================================================================
            #  Event logic
            # ============================================================================= */
@@ -54,6 +56,7 @@ namespace Magma {
            #  Window info
            # ============================================================================= */
         static USER_OS userOS;
+       static std::vector<const char*> OSSpecificExtensions;
         bool created { false };
         std::string appName;
         WINDOW_MODE mode;

@@ -88,10 +88,12 @@ void MVulkanContext::destroyVulkanInstance() {
      /* # =============================================================================
         #  Os handling
         # ============================================================================= */
-void MVulkanContext::setOSExtensions(const USER_OS OS) {
-    if (OS == USER_OS::LINUX) {
-        enabledExtensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
- }
+void MVulkanContext::setOSExtensions(const USER_OS OS,const std::vector<const char*>& extensions) {
+    if (OS != USER_OS::UNSUPPORTED) {
+        for (auto extension : extensions) {
+            enabledExtensions.push_back(extension);
+        }
+    }
 };
 
 /* # =============================================================================
