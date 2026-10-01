@@ -1,10 +1,11 @@
 #pragma once
 
-#include "../Magma.h"
-#include "windowHandler.h"
+#define VK_USE_PLATFORM_XLIB_KHR
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/Xos.h>
+
+#include "../Magma.h"
+#include "windowHandler.h"
 
 namespace Magma {
     class MLinuxHandler : public MWindowHandler {
@@ -34,6 +35,11 @@ namespace Magma {
         [[nodiscard]] Display* getX11Display() const { return display; }
         [[nodiscard]] Window getX11Window() const { return window; }
         [[nodiscard]] Atom getWmDeleteMessage() const { return wmDeleteMessage; }
+
+       /* # =============================================================================
+          #  Vulkan logic
+          # ============================================================================= */
+          void createVulkanSurface(VkInstance instance) override;
 
     private:
 

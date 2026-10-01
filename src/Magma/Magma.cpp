@@ -37,14 +37,16 @@ void MInstance::start() {
     //Subsystems
     //Vulkan init
     try {
-        MVulkanContext::setOSExtensions(MWindowHandler::getUserOS(),MWindowHandler::getOSSpecificExtensions());
+        MVulkanContext::setOSExtensions(MWindowHandler::getUserOS(), MWindowHandler::getOSSpecificExtensions());
         pVulkanContext->createInstance();
-        pVulkanContext->selectPhysicalDevice();
-        pVulkanContext->createLogicalDevice();
-        //Window creation logic
+
         pWindowHandler = pInitialWindowHandler.release();
         pWindowHandler->initWindow();
         pWindowHandler->createWindow();
+        pWindowHandler->createVulkanSurface(pVulkanContext->getVkInstance());
+
+        pVulkanContext->selectPhysicalDevice();
+        pVulkanContext->createLogicalDevice();
 
         pDebugger->print("Created magma instance.");
     }catch (std::exception& e) {

@@ -109,3 +109,22 @@ void MLinuxHandler::pollEvents() {
    };
   };
  };
+
+   /* # =============================================================================
+      #  Vulkan logic
+      # ============================================================================= */
+void MLinuxHandler::createVulkanSurface(const VkInstance instance) {
+ pDebugger->print("Creating Vulkan Xlib surface . . .");
+
+ VkXlibSurfaceCreateInfoKHR createInfo{};
+ createInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
+ createInfo.dpy = display;
+ createInfo.window = window;
+
+ if (vkCreateXlibSurfaceKHR(instance, &createInfo, nullptr, &this->surface) != VK_SUCCESS) {
+  errorCode = ErrorCode::SURFACE_CREATION_FAILED;
+  throw std::runtime_error("Failed to create Vulkan X11 surface!");
+ }
+
+ pDebugger->print("Created Vulkan Xlib surface.");
+};

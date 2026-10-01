@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <vulkan/vulkan.h>
 
 namespace Magma {
             /* # =============================================================================
@@ -44,6 +45,12 @@ namespace Magma {
         virtual void createWindow() = 0;
          static USER_OS getUserOS() {return userOS;};
         static std::vector<const char*>  getOSSpecificExtensions() {return OSSpecificExtensions;};
+
+        /* # =============================================================================
+           #  Vulkan logic
+           # ============================================================================= */
+        virtual void createVulkanSurface(VkInstance instance) = 0;
+
         /* # =============================================================================
            #  Event logic
            # ============================================================================= */
@@ -62,7 +69,12 @@ namespace Magma {
         WINDOW_MODE mode;
         unsigned int size[2]{}; // [0] width & [1] height
 
-        /* # =============================================================================
+       /* # =============================================================================
+          #  Vulkan data
+          # ============================================================================= */
+       VkSurfaceKHR surface = VK_NULL_HANDLE;
+
+       /* # =============================================================================
            #  Error handling
            # ============================================================================= */
         static ErrorCode errorCode;

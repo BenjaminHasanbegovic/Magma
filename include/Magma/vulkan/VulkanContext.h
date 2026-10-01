@@ -30,6 +30,7 @@ namespace Magma {
           #  Vulkan instance
           # ============================================================================= */
         void createInstance();
+        [[nodiscard]] VkInstance getVkInstance() const {return vkInstance;};
 
         /*# =============================================================================
           #  Logical device
@@ -44,7 +45,7 @@ namespace Magma {
         /* # =============================================================================
            #  Os handling
            # ============================================================================= */
-            static void setOSExtensions(USER_OS OS,const std::vector<const char*>& extensions);
+            static void setOSExtensions(USER_OS OS,const std::vector<const char*>& OSExtensions);
 
 
     private:

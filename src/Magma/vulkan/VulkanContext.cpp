@@ -81,11 +81,9 @@ void MVulkanContext::destroyVulkanInstance() {
      /* # =============================================================================
         #  Os handling
         # ============================================================================= */
-void MVulkanContext::setOSExtensions(const USER_OS OS,const std::vector<const char*>& extensions) {
+void MVulkanContext::setOSExtensions(const USER_OS OS,const std::vector<const char*>& OSExtensions) {
     if (OS != USER_OS::UNSUPPORTED) {
-        for (auto extension : extensions) {
-            enabledExtensions.push_back(extension);
-        }
+        enabledExtensions.insert(enabledExtensions.end(), OSExtensions.begin(), OSExtensions.end());
     }else {
         errorCode = ErrorCode::OS_NOT_SUPPORTED;
         throw std::runtime_error("Failed to set OSExtensions:" + errorCodeToString(errorCode));
