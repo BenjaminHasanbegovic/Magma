@@ -2,25 +2,12 @@
 
 #include "../Uitls/Debugger.h"
 #include "../Uitls/ErrorCodes.h"
+#include "../window/windowHandler.h"
 #include <string>
 #include <vector>
 #include <optional>
 #include <vulkan/vulkan.h>
 
-      /* # =============================================================================
-         #  Os handling
-         # ============================================================================= */
-#ifdef __linux__
-//Linux handle
-#include <xcb/xcb.h>
-#include <vulkan/vulkan_xcb.h>
-inline std::vector<const char*> instanceExtensions = {
-    VK_KHR_SURFACE_EXTENSION_NAME,
-    VK_KHR_XCB_SURFACE_EXTENSION_NAME
-};
-#elif defined(_WIN32) || defined(_WIN64)
-//Window handle
-#endif
 
 namespace Magma {
     /* # =============================================================================
@@ -39,6 +26,32 @@ namespace Magma {
         MVulkanContext(const std::string& appName,MDebugger& debugger);
         ~MVulkanContext();
 
+        /*# =============================================================================
+          #  Vulkan instance
+          # ============================================================================= */
+        void createInstance();
+        [[nodiscard]] VkInstance getVkInstance() const {return vkInstance;};
+        void setVkSurface(const VkSurfaceKHR &surface){VkSurface = surface;};
+        /*# =============================================================================
+          #  Logical device
+          # ============================================================================= */
+        void createLogicalDevice();
+
+        /*# =============================================================================
+          #  Physical device
+          # ============================================================================= */
+        void selectPhysicalDevice();
+
+        /* # =============================================================================
+           #  Os handling
+           # ============================================================================= */
+            static void setOSExtensions(USER_OS OS,const std::vector<const char*>& OSExtensions);
+
+        /*# =============================================================================
+          #  Device queue
+          # ============================================================================= */
+      void findMandatoryQueueFamilies() const;
+
     private:
 
         /* # =============================================================================
@@ -47,18 +60,22 @@ namespace Magma {
         const char *pAppName{nullptr};
         MDebugger* pDebugger{nullptr};
 
+      /* # =============================================================================
+         #  Os handling
+         # ============================================================================= */
+      static std::vector<const char*> enabledExtensions;
+
         /*# =============================================================================
           #  Vulkan instance
          # ============================================================================= */
         VkInstance vkInstance = VK_NULL_HANDLE;
-        void createInstance();
+        VkSurfaceKHR VkSurface = VK_NULL_HANDLE;
         void destroyVulkanInstance();
 
         /*# =============================================================================
           #  Logical device
           # ============================================================================= */
         VkDevice vkLogicalDevice = VK_NULL_HANDLE;
-        void createLogicalDevice();
         void destroyLogicalDevice();
 
         /*# =============================================================================
@@ -67,15 +84,13 @@ namespace Magma {
         VkPhysicalDevice vkPhysicalDevice = VK_NULL_HANDLE;
         VkPhysicalDeviceProperties vkPhysicalDeviceProperties{};
         VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures{};
-        void selectPhysicalDevice();
-        VkPhysicalDevice scorePhysicalDevices(const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList);
+        [[nodiscard]] VkPhysicalDevice scorePhysicalDevices(const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList) const;
 
         /*# =============================================================================
           #  Device queue
           # ============================================================================= */
         static std::optional<uint32_t> graphicsQueueFamilyIndex;
         static std::optional<uint32_t> presentQueueFamilyIndex;
-        void findMandatoryQueueFamilies(const VkPhysicalDevice &physicalDevice) const;
 
         /*# =============================================================================
           #  Swapchain
@@ -93,6 +108,6 @@ namespace Magma {
          #  Error handling
          # ============================================================================= */
         static ErrorCode errorCode;
-        bool checkInstanceCreationErrors(VkResult result) const;
+        [[nodiscard]] bool checkInstanceCreationErrors(VkResult result) const;
     };
 };

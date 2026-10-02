@@ -7,7 +7,7 @@ using namespace Magma;
        # ============================================================================= */
 MLinuxHandler::MLinuxHandler(const std::string& appName, const WINDOW_MODE windowMode, const unsigned int windowSize[2], MDebugger& debugger)
     : MWindowHandler(appName, windowMode, windowSize, debugger) {
-    MLinuxHandler::initWindow();
+ pDebugger->print("Constructed Linux X11 window handler.");
 };
 
 MLinuxHandler::~MLinuxHandler() {
@@ -27,9 +27,8 @@ void MLinuxHandler::initWindow() {
  //Display init &  it's error handling
  display = XOpenDisplay(nullptr);
  if (display == nullptr) {
-  pDebugger->print("Failed to open X11 display.", MESSAGE_TYPE::ERROR);
   errorCode = ErrorCode::OS_NOT_SUPPORTED;
-  MInstance::requestDestruction(errorCode);
+  throw std::runtime_error("Failed to open X11 display: " + errorCodeToString(errorCode));
   return;
  };
 
@@ -38,7 +37,7 @@ void MLinuxHandler::initWindow() {
  backgroundColor = BlackPixel(display, screen);
 
  //Creating the window
-pDebugger->print("Creating a window.");
+pDebugger->print("Creating a simple window.");
  window = XCreateSimpleWindow(
      display,
      DefaultRootWindow(display),
@@ -51,9 +50,28 @@ pDebugger->print("Creating a window.");
 
  //Getting the windows properties
  pDebugger->print("Setting window properties.");
- XSetStandardProperties(display, window, appName.c_str(), appName.c_str(), None, nullptr, 0, nullptr);
+ extractEvents();
 
- pDebugger->print("Getting needed window input data.");
+ pDebugger->print("X11 Display initialized successfully.");
+};
+
+void MLinuxHandler::createWindow() {
+ pDebugger->print("Creating Linux X11 window . . .");
+
+ XSetStandardProperties(display, window, appName.c_str(), appName.c_str(), None, nullptr, 0, nullptr);
+ XMapWindow(display, window);
+ XFlush(display);
+
+ created = true;
+
+ pDebugger->print("Created the Linux X11 window.");
+};
+
+    /* # =============================================================================
+       #  Event logic
+       # ============================================================================= */
+void MLinuxHandler::extractEvents() {
+ pDebugger->print("Extracting needed window events.");
  XSelectInput(display, window,
      ExposureMask        | //Tells the renderer that the window surface needs to be redrawn.
      KeyPressMask        | //Keyboard key is pushed down.
@@ -69,22 +87,12 @@ pDebugger->print("Creating a window.");
  pDebugger->print("Getting delete message.");
  wmDeleteMessage = XInternAtom(display, "WM_DELETE_WINDOW", False);
  XSetWMProtocols(display, window, &wmDeleteMessage, 1);
-
- //Final window creation
- XMapWindow(display, window);
- XFlush(display);
- pDebugger->print("X11 Display initialized successfully.");
-}
+};
 
 void MLinuxHandler::pollEvents() {
  pDebugger->print("Polling events . . .");
 
- if (!display) {  //Error handling
-  pDebugger->print("Couldn't poll events . . .", MESSAGE_TYPE::ERROR);
-  errorCode = ErrorCode::INVALID_ARGUMENT;
-  MInstance::requestDestruction(errorCode);
- }else {
-  //Essential event polling values
+ //Essential event polling values
   XEvent event;
 
   //Main callback loop
@@ -96,10 +104,27 @@ void MLinuxHandler::pollEvents() {
    if (event.type == ClientMessage) {
     if (static_cast<Atom>(event.xclient.data.l[0]) == wmDeleteMessage) {
     pDebugger->print("Window close requested.");
-     errorCode = ErrorCode::NO_ERRORS;
      MInstance::requestDestruction(errorCode);
     };
    };
   };
  };
+
+   /* # =============================================================================
+      #  Vulkan logic
+      # ============================================================================= */
+void MLinuxHandler::createVulkanSurface(VkInstance instance) {
+ pDebugger->print("Creating Vulkan Xlib surface . . .");
+
+ VkXlibSurfaceCreateInfoKHR createInfo{};
+ createInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
+ createInfo.dpy = display;
+ createInfo.window = window;
+
+ if (vkCreateXlibSurfaceKHR(instance, &createInfo, nullptr, &this->surface) != VK_SUCCESS) {
+  errorCode = ErrorCode::SURFACE_CREATION_FAILED;
+  throw std::runtime_error("Failed to create Vulkan X11 surface!");
+ }
+
+ pDebugger->print("Created Vulkan Xlib surface.");
 };
