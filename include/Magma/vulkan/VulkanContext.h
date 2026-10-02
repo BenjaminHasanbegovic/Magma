@@ -2,7 +2,7 @@
 
 #include "../Uitls/Debugger.h"
 #include "../Uitls/ErrorCodes.h"
-#include "../window/windowHandler.h"
+
 #include <string>
 #include <vector>
 #include <optional>
@@ -45,7 +45,7 @@ namespace Magma {
         /* # =============================================================================
            #  Os handling
            # ============================================================================= */
-            static void setOSExtensions(USER_OS OS,const std::vector<const char*>& OSExtensions);
+            static void setOSExtensions(unsigned int OS,const std::vector<const char*>& OSExtensions);
 
         /*# =============================================================================
           #  Device queue

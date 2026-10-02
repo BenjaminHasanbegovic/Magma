@@ -2,7 +2,6 @@
 #include "../../../include/Magma/Magma.h"
 #include <set>
 #include <xcb/xcb.h>
-#include <vulkan/vulkan_xcb.h>
 
 using namespace Magma;
 
@@ -81,7 +80,7 @@ void MVulkanContext::destroyVulkanInstance() {
      /* # =============================================================================
         #  Os handling
         # ============================================================================= */
-void MVulkanContext::setOSExtensions(const USER_OS OS,const std::vector<const char*>& OSExtensions) {
+void MVulkanContext::setOSExtensions(const unsigned int OS,const std::vector<const char*>& OSExtensions) {
     if (OS != USER_OS::UNSUPPORTED) {
         enabledExtensions.insert(enabledExtensions.end(), OSExtensions.begin(), OSExtensions.end());
     }else {

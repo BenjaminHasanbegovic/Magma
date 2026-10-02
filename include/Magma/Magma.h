@@ -3,6 +3,8 @@
 #include "Uitls/Debugger.h"
 #include "./window/windowHandler.h"
 #include "Uitls/ErrorCodes.h"
+#include "../../include/Magma/vulkan/VulkanContext.h"
+
 #include <string>
 
 namespace Magma {

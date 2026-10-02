@@ -1,5 +1,4 @@
 #include "../../include/Magma/Magma.h"
-#include "../../include/Magma/vulkan/VulkanContext.h"
 
 using namespace Magma;
 

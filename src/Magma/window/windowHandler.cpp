@@ -1,9 +1,5 @@
 #include "../../../include/Magma/window/windowHandler.h"
 
-
-
-#include "../../../include/Magma/Magma.h"
-
 using namespace Magma;
     /* # =============================================================================
        #  Getting user OS
