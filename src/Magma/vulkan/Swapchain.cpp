@@ -65,4 +65,23 @@ void MSwapchain::create(VkPhysicalDevice physicalDevice,VkSurfaceKHR surface) {
     getSurfacePresentMode(physicalDevice,surface);
 
     pDebugger->print("Created swapchain.");
+};
+
+VkSurfaceFormatKHR MSwapchain::chooseSwapchainFormat() const {
+    pDebugger->print("Selecting optimal surface format . . .");
+
+    if (surfaceFormats.empty()) {
+        throw std::runtime_error("Cannot choose swapchain format: surfaceFormats vector is empty.");
+    };
+
+    for (const auto& availableFormat : surfaceFormats) {
+        if ((availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB || availableFormat.format == VK_FORMAT_R8G8B8A8_SRGB) &&
+             availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+            pDebugger->print("Selected optimal sRGB surface format.");
+            return availableFormat;
+             };
+    };
+
+    pDebugger->print("Preferred sRGB format not found. Falling back to first available format.", MESSAGE_TYPE::WARNING);
+    return surfaceFormats[0];
 }

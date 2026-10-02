@@ -7,13 +7,14 @@
 namespace Magma {
     class MSwapchain {
     public:
-        MSwapchain(MDebugger& debugger);
+        explicit MSwapchain(MDebugger& debugger);
         ~MSwapchain();
 
         /*# =============================================================================
          #  Swapchain
          # ============================================================================= */
         void create(VkPhysicalDevice physicalDevice,VkSurfaceKHR surface);
+        VkSurfaceFormatKHR chooseSwapchainFormat() const;
     private:
         /*# =============================================================================
           #  Debuging
