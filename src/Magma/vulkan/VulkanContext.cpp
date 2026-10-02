@@ -225,9 +225,8 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(const std::vector<VkPhysic
                 }
             };
             pDebugger->print("Checking for mandatory features and properties . . .");
-            findMandatoryQueueFamilies(physicalDevice);
-            if (!checkMandatoryPhysicalDevicePropertiesAndFeatures("graphics queue families",graphicsQueueFamilyIndex.has_value()) ||
-            !checkMandatoryPhysicalDevicePropertiesAndFeatures("sampler anisotropy",physicalDeviceFeatures.samplerAnisotropy) ||
+
+            if (!checkMandatoryPhysicalDevicePropertiesAndFeatures("sampler anisotropy",physicalDeviceFeatures.samplerAnisotropy) ||
             !checkMandatoryPhysicalDevicePropertiesAndFeatures("independent blend",physicalDeviceFeatures.independentBlend) ||
             !checkMandatoryPhysicalDevicePropertiesAndFeatures("fillModeNonSolid",physicalDeviceFeatures.fillModeNonSolid) ||
             !checkMandatoryPhysicalDevicePropertiesAndFeatures("depth clamp",physicalDeviceFeatures.depthClamp) ||
@@ -276,28 +275,43 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(const std::vector<VkPhysic
     };
 };
 
-void MVulkanContext::findMandatoryQueueFamilies(const VkPhysicalDevice &physicalDevice) const {
-    pDebugger->print("Finding  the queue families . . .");
+void MVulkanContext::findMandatoryQueueFamilies() const {
+    pDebugger->print("Finding the queue families . . .");
 
     uint32_t queueFamilyCount{0};
-    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
+    vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &queueFamilyCount, nullptr);
+    std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &queueFamilyCount, queueFamilyProperties.data());
 
     for (uint32_t i = 0; i < queueFamilyCount; ++i) {
-        // Check for graphics support
-        if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+        // Check for graphics queue
+        if (queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
            graphicsQueueFamilyIndex = i;
-
-        };
-
-        if (graphicsQueueFamilyIndex.has_value()) {
             pDebugger->print("Found the graphics queue family,index: " + std::to_string(i) + ".");
-            return;
-        }else {
-            errorCode = ErrorCode::NO_GRAPHICAL_QUEUE_INDEX_FOUND;
-          throw std::runtime_error("Couldn't find the graphics queue family: " + errorCodeToString(errorCode));
         };
+
+        // Check for present queue
+        VkBool32 presentSupport = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice,i,VkSurface,&presentSupport);
+        if (queueFamilyProperties[i].queueCount > 0 && presentSupport) {
+            presentQueueFamilyIndex = i;
+            pDebugger->print("Found the present queue family,index: " + std::to_string(i) + ".");
+        };
+
+        if (graphicsQueueFamilyIndex.has_value() && presentQueueFamilyIndex.has_value()) {
+            pDebugger->print("Found all needed queue families.");
+            break;
+        }
+    };
+
+    //Error handling
+    if (!graphicsQueueFamilyIndex.has_value()) {
+        errorCode = ErrorCode::NO_GRAPHICAL_QUEUE_INDEX_FOUND;
+        throw std::runtime_error("Couldn't find the graphics queue family: " + errorCodeToString(errorCode));
+    }
+    if (!presentQueueFamilyIndex.has_value()) {
+        errorCode = ErrorCode::PRESENT_QUEUE_SUBMIT_FAILED;
+        throw std::runtime_error("Couldn't find the present queue family: " + errorCodeToString(errorCode));
     };
 };
 

@@ -50,7 +50,7 @@ namespace Magma {
            #  Vulkan logic
            # ============================================================================= */
         virtual void createVulkanSurface(VkInstance instance) = 0;
-
+        [[nodiscard]] VkSurfaceKHR getVkSurface() const {return surface;};
         /* # =============================================================================
            #  Event logic
            # ============================================================================= */

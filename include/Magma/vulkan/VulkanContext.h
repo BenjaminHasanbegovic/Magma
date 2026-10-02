@@ -31,7 +31,7 @@ namespace Magma {
           # ============================================================================= */
         void createInstance();
         [[nodiscard]] VkInstance getVkInstance() const {return vkInstance;};
-
+        void setVkSurface(const VkSurfaceKHR &surface){VkSurface = surface;};
         /*# =============================================================================
           #  Logical device
           # ============================================================================= */
@@ -47,6 +47,10 @@ namespace Magma {
            # ============================================================================= */
             static void setOSExtensions(USER_OS OS,const std::vector<const char*>& OSExtensions);
 
+        /*# =============================================================================
+          #  Device queue
+          # ============================================================================= */
+      void findMandatoryQueueFamilies() const;
 
     private:
 
@@ -65,6 +69,7 @@ namespace Magma {
           #  Vulkan instance
          # ============================================================================= */
         VkInstance vkInstance = VK_NULL_HANDLE;
+        VkSurfaceKHR VkSurface = VK_NULL_HANDLE;
         void destroyVulkanInstance();
 
         /*# =============================================================================
@@ -86,7 +91,6 @@ namespace Magma {
           # ============================================================================= */
         static std::optional<uint32_t> graphicsQueueFamilyIndex;
         static std::optional<uint32_t> presentQueueFamilyIndex;
-        void findMandatoryQueueFamilies(const VkPhysicalDevice &physicalDevice) const;
 
         /*# =============================================================================
           #  Swapchain

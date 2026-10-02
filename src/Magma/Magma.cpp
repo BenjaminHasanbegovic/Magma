@@ -43,9 +43,12 @@ void MInstance::start() {
         pWindowHandler = pInitialWindowHandler.release();
         pWindowHandler->initWindow();
         pWindowHandler->createWindow();
+
         pWindowHandler->createVulkanSurface(pVulkanContext->getVkInstance());
+        pVulkanContext->setVkSurface(pWindowHandler->getVkSurface());
 
         pVulkanContext->selectPhysicalDevice();
+        pVulkanContext->findMandatoryQueueFamilies();
         pVulkanContext->createLogicalDevice();
 
         pDebugger->print("Created magma instance.");

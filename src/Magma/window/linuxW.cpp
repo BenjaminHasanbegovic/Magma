@@ -113,7 +113,7 @@ void MLinuxHandler::pollEvents() {
    /* # =============================================================================
       #  Vulkan logic
       # ============================================================================= */
-void MLinuxHandler::createVulkanSurface(const VkInstance instance) {
+void MLinuxHandler::createVulkanSurface(VkInstance instance) {
  pDebugger->print("Creating Vulkan Xlib surface . . .");
 
  VkXlibSurfaceCreateInfoKHR createInfo{};
