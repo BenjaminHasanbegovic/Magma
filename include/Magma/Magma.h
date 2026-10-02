@@ -1,9 +1,10 @@
 #pragma once
 
 #include "Uitls/Debugger.h"
-#include "./window/windowHandler.h"
+#include "window/windowHandler.h"
 #include "Uitls/ErrorCodes.h"
-#include "../../include/Magma/vulkan/VulkanContext.h"
+#include "vulkan/VulkanContext.h"
+#include "vulkan/Swapchain.h"
 
 #include <string>
 
@@ -14,6 +15,7 @@ namespace Magma {
     class MVulkanContext;
     class MWindowHandler;
     class MDebugger;
+    class MSwapchain;
 
     /* # =============================================================================
          #  Main class
@@ -32,13 +34,6 @@ namespace Magma {
         void start();
         void stop();
 
-        /* # =============================================================================
-          #  Error handling
-          # ============================================================================= */
-        void tryDestruction(ErrorCode errorCode = ErrorCode::NO_ERRORS);
-        static void requestDestruction(ErrorCode errorCode = ErrorCode::NO_ERRORS);
-        [[nodiscard]] static MInstance* getInstance() { return s_Instance; }
-
     private:
         /* # =============================================================================
            #  Debugging
@@ -48,11 +43,10 @@ namespace Magma {
         /* # =============================================================================
            #  State control
            # ============================================================================= */
-        static inline MInstance* s_Instance{nullptr};
-        void destroy();
+       void destroy();
         bool isRunning{false};
         bool isDestroyed{false};
-
+        void startMainCallbackLoop();
         /* # =============================================================================
            #  Instance info
            # ============================================================================= */
@@ -63,7 +57,11 @@ namespace Magma {
         /* # =============================================================================
            #  Subsystems
            # ============================================================================= */
+       //Vulkan
         MVulkanContext* pVulkanContext{nullptr};
+        MSwapchain* pSwapchain{nullptr};
+
+       //Window creation
         MWindowHandler* pWindowHandler{nullptr};
         std::unique_ptr<MWindowHandler> pInitialWindowHandler{nullptr};
     };

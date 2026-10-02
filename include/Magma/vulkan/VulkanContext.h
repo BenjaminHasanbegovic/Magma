@@ -41,8 +41,9 @@ namespace Magma {
           #  Physical device
           # ============================================================================= */
         void selectPhysicalDevice();
+        [[nodiscard]] VkPhysicalDevice getVkPhysicalDeviceDevice() const {return vkPhysicalDevice;};
 
-        /* # =============================================================================
+      /* # =============================================================================
            #  Os handling
            # ============================================================================= */
             static void setOSExtensions(unsigned int OS,const std::vector<const char*>& OSExtensions);
@@ -58,7 +59,7 @@ namespace Magma {
            #  Magma instance
            # ============================================================================= */
         const char *pAppName{nullptr};
-        MDebugger* pDebugger{nullptr};
+        MDebugger *pDebugger{nullptr};
 
       /* # =============================================================================
          #  Os handling

@@ -20,11 +20,11 @@ namespace Magma {
            # ============================================================================= */
         void initWindow() override;
         void createWindow() override;
-
+        void getFramebufferSize(uint32_t& width, uint32_t& height) const override;
         /* # =============================================================================
            #  Event logic
            # ============================================================================= */
-        void pollEvents() override;
+        void pollEvents(bool &runningState) override;
         void extractEvents() override;
 
         /* # =============================================================================

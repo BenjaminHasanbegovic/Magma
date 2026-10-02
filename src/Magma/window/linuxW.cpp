@@ -58,7 +58,7 @@ pDebugger->print("Creating a simple window.");
 void MLinuxHandler::createWindow() {
  pDebugger->print("Creating Linux X11 window . . .");
 
- XSetStandardProperties(display, window, appName.c_str(), appName.c_str(), None, nullptr, 0, nullptr);
+ XSetStandardProperties(display, window, pAppName, pAppName, None, nullptr, 0, nullptr);
  XMapWindow(display, window);
  XFlush(display);
 
@@ -67,6 +67,16 @@ void MLinuxHandler::createWindow() {
  pDebugger->print("Created the Linux X11 window.");
 };
 
+void MLinuxHandler::getFramebufferSize(uint32_t& width, uint32_t& height) const {
+ XWindowAttributes windowAttributes;
+ if (XGetWindowAttributes(display, window, &windowAttributes)) {
+  width = static_cast<uint32_t>(windowAttributes.width);
+  height = static_cast<uint32_t>(windowAttributes.height);
+ } else {
+  width = size[0];
+  height = size[1];
+ };
+};
     /* # =============================================================================
        #  Event logic
        # ============================================================================= */
@@ -79,7 +89,7 @@ void MLinuxHandler::extractEvents() {
      ButtonPressMask     | //Event when a mouse button (left, right, middle, or scroll wheel step) is clicked down.
      ButtonReleaseMask   | //Event when a mouse button is released.
      PointerMotionMask   | //Event continuously as long as the mouse cursor moves within the window bounds.
-     StructureNotifyMask | //Event when the window changes size, position, or stacking order.
+     StructureNotifyMask | ConfigureNotify | //Events when the window changes size, position, or stacking order.
      FocusChangeMask       //Events when the user switches to or away from the application.
  );
 
@@ -89,41 +99,47 @@ void MLinuxHandler::extractEvents() {
  XSetWMProtocols(display, window, &wmDeleteMessage, 1);
 };
 
-void MLinuxHandler::pollEvents() {
+void MLinuxHandler::pollEvents(bool &runningState) {
  pDebugger->print("Polling events . . .");
 
  //Essential event polling values
-  XEvent event;
+ XEvent event;
+ XNextEvent(display,&event);
 
-  //Main callback loop
-  while (XPending(display) > 0) {
-   //Skip to new event
-   XNextEvent(display,&event);
-
-   //Window exit method
-   if (event.type == ClientMessage) {
-    if (static_cast<Atom>(event.xclient.data.l[0]) == wmDeleteMessage) {
+ if (event.type == ClientMessage) {
+   pDebugger->print("Client message received.");
+   if (static_cast<Atom>(event.xclient.data.l[0]) == wmDeleteMessage) {
     pDebugger->print("Window close requested.");
-    };
+    runningState = false;
+   };
+  }else if (event.type == ConfigureNotify) {
+   const auto newWidth = static_cast<uint32_t>(event.xconfigure.width);
+   const auto newHeight = static_cast<uint32_t>(event.xconfigure.height);
+
+   if (newWidth != size[0] || newHeight != size[1]) {
+    size[0] = newWidth;
+    size[1] = newHeight;
+    framebufferResized = true;
    };
   };
  };
 
-   /* # =============================================================================
-      #  Vulkan logic
-      # ============================================================================= */
-void MLinuxHandler::createVulkanSurface(VkInstance instance) {
- pDebugger->print("Creating Vulkan Xlib surface . . .");
+ /* # =============================================================================
+    #  Vulkan logic
+    # ============================================================================= */
+ void MLinuxHandler::createVulkanSurface(VkInstance instance) {
+  pDebugger->print("Creating Vulkan Xlib surface . . .");
 
- VkXlibSurfaceCreateInfoKHR createInfo{};
- createInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
- createInfo.dpy = display;
- createInfo.window = window;
+  VkXlibSurfaceCreateInfoKHR createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
+  createInfo.dpy = display;
+  createInfo.window = window;
 
- if (vkCreateXlibSurfaceKHR(instance, &createInfo, nullptr, &this->surface) != VK_SUCCESS) {
-  errorCode = ErrorCode::SURFACE_CREATION_FAILED;
-  throw std::runtime_error("Failed to create Vulkan X11 surface!");
- }
+  if (vkCreateXlibSurfaceKHR(instance, &createInfo, nullptr, &this->surface) != VK_SUCCESS) {
+   errorCode = ErrorCode::SURFACE_CREATION_FAILED;
+   throw std::runtime_error("Failed to create Vulkan X11 surface!");
+  }
 
- pDebugger->print("Created Vulkan Xlib surface.");
-};
+  pDebugger->print("Created Vulkan Xlib surface.");
+ };
+

@@ -10,25 +10,23 @@ MInstance::MInstance(std::string appName, const unsigned int newWindowSize[2], W
     //Class value init
     windowSize[0] = newWindowSize[0];
     windowSize[1] = newWindowSize[1];
-    s_Instance = this;
+
     //Subsystems
     pDebugger = new MDebugger(this->appName);
     pVulkanContext = new MVulkanContext(appName, *pDebugger);
     pInitialWindowHandler = MWindowHandler::create(appName, windowMode, windowSize, *pDebugger);
+    pSwapchain = new MSwapchain(*pDebugger);
 
     pDebugger->print("Initializing magma instance.");
 }
 
 MInstance::~MInstance() {
     destroy();
-    if (s_Instance == this) {
-        s_Instance = nullptr;
-    };
 };
 
 /* # =============================================================================
- #  Instance lifecycle
- # ============================================================================= */
+   #   State control
+   # ============================================================================= */
 void MInstance::start() {
     isRunning = true;
     pDebugger->print("Starting magma instance . . .");
@@ -50,10 +48,15 @@ void MInstance::start() {
         pVulkanContext->findMandatoryQueueFamilies();
         pVulkanContext->createLogicalDevice();
 
+        pSwapchain->create(pVulkanContext->getVkPhysicalDeviceDevice(),pWindowHandler->getVkSurface());
+
+        isRunning = true;
         pDebugger->print("Created magma instance.");
+        startMainCallbackLoop();
     }catch (std::exception& e) {
         pDebugger->print(std::string("Initialization aborted:\n ") + e.what(), MESSAGE_TYPE::ERROR);
-    }
+        destroy();
+    };
 };
 
 void MInstance::stop() {
@@ -65,9 +68,18 @@ void MInstance::stop() {
     };
 };
 
+
 /* # =============================================================================
-   #  State control
+   #  Instance lifecycle
    # ============================================================================= */
+void MInstance::startMainCallbackLoop() {
+    pDebugger->print("Starting main loop . . .");
+    while (isRunning) {
+        pWindowHandler->pollEvents(isRunning);
+    };
+    pDebugger->print("Main loop ended.");
+};
+
 void MInstance::destroy() {
     if (isDestroyed) {
         return;
@@ -77,6 +89,9 @@ void MInstance::destroy() {
         pDebugger->print("Destroying magma instance . . .");
     }
     //The order of destruction is important
+    delete pSwapchain;
+    pSwapchain = nullptr;
+
     pInitialWindowHandler.reset();
     pInitialWindowHandler = nullptr;
 
@@ -92,24 +107,3 @@ void MInstance::destroy() {
     isRunning = false;
     isDestroyed = true;
 }
-
-void MInstance::requestDestruction(const ErrorCode errorCode) { //The function is here so external classes can invoke destruction
-    if (s_Instance) {
-        s_Instance->tryDestruction(errorCode);
-    };
-};
-
-void MInstance::tryDestruction(const ErrorCode errorCode) {
-    if (pDebugger) {
-        pDebugger->print("Destruction requested for magma instance.\nREQUEST REASON: " +
-                         std::string(errorCodeToString(errorCode)) +
-                         " (CODE: " + std::to_string(static_cast<uint32_t>(errorCode)) + ")",
-                         MESSAGE_TYPE::ERROR);
-    };
-
-    //Lifecycle end
-    if (isRunning) {
-        stop();
-    };
-    destroy();
-};
