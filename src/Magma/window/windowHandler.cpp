@@ -49,12 +49,15 @@ std::unique_ptr<MWindowHandler> MWindowHandler::create(const std::string& appNam
    #  Class init and destruction
    # ============================================================================= */
 MWindowHandler::MWindowHandler(const std::string& appName, WINDOW_MODE windowMode, const unsigned int windowSize[2], MDebugger& debugger)
-    : appName(appName), mode(windowMode), pDebugger(&debugger) {
+    : mode(windowMode), pDebugger(&debugger) {
     size[0] = windowSize[0];
     size[1] = windowSize[1];
+    pAppName = appName.c_str();
 };
 
 MWindowHandler::~MWindowHandler() {
-    pDebugger->print("Destroying window handler . . .");
-    pDebugger->print("Destroyed window handler.");
+    pDebugger->print("Destroying window handler.");
+
+    pDebugger = nullptr;
+    pAppName = nullptr;
 };

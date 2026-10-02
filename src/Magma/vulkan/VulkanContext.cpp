@@ -25,10 +25,13 @@ MVulkanContext::MVulkanContext(const std::string& appName,MDebugger& debugger){
 };
 
 MVulkanContext::~MVulkanContext() {
-    pDebugger->print("Destroying vulkan context . . .");
+    pDebugger->print("Destroying vulkan context.");
     destroyLogicalDevice();
     destroyVulkanInstance();
-    pDebugger->print("Destroyed vulkan context.");
+
+    //Destroy remaining pointers
+    pDebugger = nullptr;
+    pAppName = nullptr;
 };
 
 
