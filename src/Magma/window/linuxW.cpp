@@ -104,7 +104,6 @@ void MLinuxHandler::pollEvents() {
    if (event.type == ClientMessage) {
     if (static_cast<Atom>(event.xclient.data.l[0]) == wmDeleteMessage) {
     pDebugger->print("Window close requested.");
-     MInstance::requestDestruction(errorCode);
     };
    };
   };

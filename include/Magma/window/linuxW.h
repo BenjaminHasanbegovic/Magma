@@ -3,8 +3,6 @@
 #define VK_USE_PLATFORM_XLIB_KHR
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-
-#include "../Magma.h"
 #include "windowHandler.h"
 
 namespace Magma {
@@ -44,7 +42,7 @@ namespace Magma {
     private:
 
         /* # =============================================================================
-           #  Window creation data (getters)
+           #  Window creation data
            # ============================================================================= */
         //Essential
         Display* display{nullptr};
