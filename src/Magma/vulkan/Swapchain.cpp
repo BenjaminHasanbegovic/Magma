@@ -17,7 +17,7 @@ MSwapchain::~MSwapchain() {
   #  Swapchain
   # ============================================================================= */
 
-void MSwapchain::create(VkPhysicalDevice physicalDevice,VkSurfaceKHR surface) {
+void MSwapchain::querySupport(VkPhysicalDevice physicalDevice,VkSurfaceKHR surface) {
     pDebugger->print("Creating swapchain . . .");
 
     auto getSurfaceCapabilities = [this](VkPhysicalDevice physicalDevice,VkSurfaceKHR surface) {

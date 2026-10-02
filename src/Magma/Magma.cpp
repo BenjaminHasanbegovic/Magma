@@ -48,7 +48,7 @@ void MInstance::start() {
         pVulkanContext->findMandatoryQueueFamilies();
         pVulkanContext->createLogicalDevice();
 
-        pSwapchain->create(pVulkanContext->getVkPhysicalDeviceDevice(),pWindowHandler->getVkSurface());
+        pSwapchain->querySupport(pVulkanContext->getVkPhysicalDeviceDevice(),pWindowHandler->getVkSurface());
 
         isRunning = true;
         pDebugger->print("Created magma instance.");

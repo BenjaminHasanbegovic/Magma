@@ -13,7 +13,7 @@ namespace Magma {
         /*# =============================================================================
          #  Swapchain
          # ============================================================================= */
-        void create(VkPhysicalDevice physicalDevice,VkSurfaceKHR surface);
+        void querySupport(VkPhysicalDevice physicalDevice,VkSurfaceKHR surface);
         VkSurfaceFormatKHR chooseSwapchainFormat() const;
     private:
         /*# =============================================================================
