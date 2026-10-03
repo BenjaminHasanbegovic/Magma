@@ -67,12 +67,11 @@ void MSwapchain::querySupport(VkPhysicalDevice physicalDevice,VkSurfaceKHR surfa
     pDebugger->print("Created swapchain.");
 };
 
-VkSurfaceFormatKHR MSwapchain::chooseSwapchainFormat() const {
-    pDebugger->print("Selecting optimal surface format . . .");
+VkSurfaceFormatKHR MSwapchain::chooseFormat() const {
+    pDebugger->print("Selecting surface format . . .");
 
-    if (surfaceFormats.empty()) {
-        throw std::runtime_error("Cannot choose swapchain format: surfaceFormats vector is empty.");
-    };
+    //Error handling
+    if (surfaceFormats.empty()) throw std::runtime_error("Cannot choose swapchain format: surfaceFormats vector is empty.");
 
     for (const auto& availableFormat : surfaceFormats) {
         if ((availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB || availableFormat.format == VK_FORMAT_R8G8B8A8_SRGB) &&
@@ -82,6 +81,28 @@ VkSurfaceFormatKHR MSwapchain::chooseSwapchainFormat() const {
              };
     };
 
+    //Fallback
     pDebugger->print("Preferred sRGB format not found. Falling back to first available format.", MESSAGE_TYPE::WARNING);
     return surfaceFormats[0];
 }
+
+
+VkPresentModeKHR MSwapchain::choosePresentMode() const {
+    pDebugger->print("Selecting present mode . . .");
+
+    //Error handling
+    if (presentModes.empty()) throw std::runtime_error("Cannot choose swapchain present mode: presentModes vector is empty.");
+
+    //Look for the optimal present mode
+    for (const auto& availablePresentMode : presentModes) {
+      if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+          return availablePresentMode;
+          pDebugger->print("Selected present mode VK_PRESENT_MODE_MAILBOX_KHR.");
+          break;
+      };
+  } ;
+
+    //Fallback if the MAILBOX present mode is not available
+    pDebugger->print("Couldn't find the wanted present mode fallback was chosen:VK_PRESENT_MODE_FIFO_KHR.", MESSAGE_TYPE::WARNING);
+    return VK_PRESENT_MODE_FIFO_KHR;
+};

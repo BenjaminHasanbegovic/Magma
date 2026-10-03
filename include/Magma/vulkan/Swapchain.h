@@ -14,7 +14,9 @@ namespace Magma {
          #  Swapchain
          # ============================================================================= */
         void querySupport(VkPhysicalDevice physicalDevice,VkSurfaceKHR surface);
-        VkSurfaceFormatKHR chooseSwapchainFormat() const;
+        VkSurfaceFormatKHR chooseFormat() const;
+        VkPresentModeKHR  choosePresentMode() const;
+
     private:
         /*# =============================================================================
           #  Debuging
