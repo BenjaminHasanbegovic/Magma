@@ -2,7 +2,9 @@
 
 using namespace Magma;
 
-MSwapchain::MSwapchain(MDebugger& debugger) {
+MSwapchain::MSwapchain(MDebugger& debugger,VkPhysicalDevice physicalDevice,VkSurfaceKHR surface):
+physicalDevice(physicalDevice),surface(surface)
+{
     pDebugger = &debugger;
     pDebugger->print("Initializing Swapchain.");
 };
@@ -17,15 +19,15 @@ MSwapchain::~MSwapchain() {
   #  Swapchain
   # ============================================================================= */
 
-void MSwapchain::querySupport(VkPhysicalDevice physicalDevice,VkSurfaceKHR surface) {
+void MSwapchain::querySupport() {
     pDebugger->print("Creating swapchain . . .");
 
-    auto getSurfaceCapabilities = [this](VkPhysicalDevice physicalDevice,VkSurfaceKHR surface) {
+    auto getSurfaceCapabilities = [this]() {
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
         pDebugger->print("Fetched surface capabilities.");
     };
 
-    auto getSurfaceFormats = [this](VkPhysicalDevice physicalDevice,VkSurfaceKHR surface) {
+    auto getSurfaceFormats = [this]() {
         uint32_t surfaceFormatCount{0};
 
         vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, nullptr);
@@ -39,7 +41,7 @@ void MSwapchain::querySupport(VkPhysicalDevice physicalDevice,VkSurfaceKHR surfa
         pDebugger->print("Fetched surface formats.");
     };
 
-    auto getSurfacePresentMode = [this](VkPhysicalDevice physicalDevice, VkSurfaceKHR surface){
+    auto getSurfacePresentMode = [this](){
         uint32_t presentModeCount = 0;
         VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
 
@@ -60,9 +62,9 @@ void MSwapchain::querySupport(VkPhysicalDevice physicalDevice,VkSurfaceKHR surfa
         };
     };
 
-    getSurfaceCapabilities(physicalDevice,surface);
-    getSurfaceFormats(physicalDevice,surface);
-    getSurfacePresentMode(physicalDevice,surface);
+    getSurfaceCapabilities();
+    getSurfaceFormats();
+    getSurfacePresentMode();
 
     pDebugger->print("Created swapchain.");
 };
@@ -86,7 +88,6 @@ VkSurfaceFormatKHR MSwapchain::chooseFormat() const {
     return surfaceFormats[0];
 }
 
-
 VkPresentModeKHR MSwapchain::choosePresentMode() const {
     pDebugger->print("Selecting present mode . . .");
 
@@ -103,6 +104,23 @@ VkPresentModeKHR MSwapchain::choosePresentMode() const {
   } ;
 
     //Fallback if the MAILBOX present mode is not available
-    pDebugger->print("Couldn't find the wanted present mode fallback was chosen:VK_PRESENT_MODE_FIFO_KHR.", MESSAGE_TYPE::WARNING);
+    pDebugger->print("Couldn't find the wanted present mode fallback was chosen: VK_PRESENT_MODE_FIFO_KHR.", MESSAGE_TYPE::WARNING);
     return VK_PRESENT_MODE_FIFO_KHR;
+};
+
+void MSwapchain::create() {
+    pDebugger->print("Creating swapchain . . .");
+
+    VkSurfaceFormatKHR surfaceFormat = chooseFormat();
+    VkPresentModeKHR presentMode = choosePresentMode();
+    // VkExtent2D extent = chooseExtent();
+
+    uint32_t imageCount = surfaceCapabilities.minImageCount + 1;
+    if (surfaceCapabilities.maxImageCount > 0 && imageCount > surfaceCapabilities.maxImageCount) {
+        imageCount = surfaceCapabilities.maxImageCount;
+    };
+
+    VkSwapchainCreateInfoKHR createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    createInfo.surface = surface;
 };

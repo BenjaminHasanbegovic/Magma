@@ -15,8 +15,8 @@ MInstance::MInstance(std::string appName, const unsigned int newWindowSize[2], W
     pDebugger = new MDebugger(this->appName);
     pVulkanContext = new MVulkanContext(appName, *pDebugger);
     pInitialWindowHandler = MWindowHandler::create(appName, windowMode, windowSize, *pDebugger);
-    pSwapchain = new MSwapchain(*pDebugger);
 
+    pDebugger->print("Sushi", MESSAGE_TYPE::WARNING);
     pDebugger->print("Initializing magma instance.");
 }
 
@@ -48,7 +48,9 @@ void MInstance::start() {
         pVulkanContext->findMandatoryQueueFamilies();
         pVulkanContext->createLogicalDevice();
 
-        pSwapchain->querySupport(pVulkanContext->getVkPhysicalDeviceDevice(),pWindowHandler->getVkSurface());
+        pSwapchain = new MSwapchain(*pDebugger,pVulkanContext->getVkPhysicalDeviceDevice(),pWindowHandler->getVkSurface());
+        pSwapchain->querySupport();
+        pSwapchain->create();
 
         isRunning = true;
         pDebugger->print("Created magma instance.");
