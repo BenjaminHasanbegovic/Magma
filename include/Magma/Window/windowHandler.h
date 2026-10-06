@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Uitls/Debugger.h"
-#include "../Uitls/ErrorCodes.h"
+#include "../Utils/Debugger.h"
+#include "../Utils/ErrorCodes.h"
 #include <memory>
 #include <string>
 #include <vector>

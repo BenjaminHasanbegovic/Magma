@@ -46,11 +46,17 @@ void MInstance::start() {
     pVulkanContext->findMandatoryQueueFamilies();
     pVulkanContext->createLogicalDevice();
 
-    pSwapchain = new MSwapchain(
-        *pDebugger, pVulkanContext->getPhysicalDeviceDevice(),
-        pVulkanContext->getLogicalDevice(), pWindowHandler->getSurface());
+    pSwapchain = new MSwapchain(*pDebugger, pVulkanContext->getPhysicalDevice(),
+                                pVulkanContext->getLogicalDevice(),
+                                pWindowHandler->getSurface());
     pSwapchain->querySupport();
     pSwapchain->create();
+
+    pRenderer =
+        new MRenderer(pVulkanContext->getLogicalDevice(),
+                      pSwapchain->getSwapchain(), pSwapchain->getImageCount(),
+                      pSwapchain->getImages(), pSwapchain->getImageViews(),*pDebugger);
+
 
     isRunning = true;
     pDebugger->print("Created magma instance.");

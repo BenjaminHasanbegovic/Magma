@@ -1,74 +1,65 @@
 #pragma once
 
-#include "Uitls/Debugger.h"
-#include "window/windowHandler.h"
-#include "Uitls/ErrorCodes.h"
-#include "vulkan/VulkanContext.h"
-#include "vulkan/Swapchain.h"
+#include "Utils/Debugger.h"
+#include "Utils/ErrorCodes.h"
+#include "Vulkan/Swapchain.h"
+#include "Vulkan/VulkanContext.h"
+#include "Window/windowHandler.h"
+#include "Vulkan/Renderer.h"
 
 #include <string>
 
 namespace Magma {
+class MInstance {
+public:
+  /*=============================================================================
+    Class init and destruction
+    =============================================================================*/
+  explicit MInstance(std::string appName, const unsigned int newWindowSize[2],
+                     WINDOW_MODE newWindowMode);
+  ~MInstance();
 
-    /* # =============================================================================
-       #  External classes
-       # ============================================================================= */
-    class MVulkanContext;
-    class MWindowHandler;
-    class MDebugger;
-    class MSwapchain;
+  /*=============================================================================
+    State control
+    =============================================================================*/
+  void start();
+  void stop();
 
- /* # =============================================================================
-    #  Main class
-    # ============================================================================= */
-    class MInstance {
-    public:
+private:
 
- /* # =============================================================================
-    #  Class init and destruction
-    # ============================================================================= */
-    explicit MInstance(std::string appName, const unsigned int newWindowSize[2], WINDOW_MODE newWindowMode);
-    ~MInstance();
+  /*=============================================================================
+    Debuging
+    =============================================================================*/
+  MDebugger *pDebugger{nullptr};
 
- /* # =============================================================================
-         #   State control
-         # ============================================================================= */
-        void start();
-        void stop();
+  /*=============================================================================
+    State control
+    =============================================================================*/
+  bool isRunning{false};
 
-    private:
-        /* # =============================================================================
-           #  Debugging
-           # ============================================================================= */
-        MDebugger* pDebugger{nullptr};
+  /*=============================================================================
+    Lifecycle
+    =============================================================================*/
+  void destroy();
+  void startMainCallbackLoop();
 
-        /* # =============================================================================
-           #  State control
-           # ============================================================================= */
-        bool isRunning{false};
+  /*=============================================================================
+    Instance info
+    =============================================================================*/
+  std::string appName;
+  unsigned int windowSize[2]{0, 0};
+  WINDOW_MODE windowMode;
 
-       /* # =============================================================================
-          # Lifecycle
-          # ============================================================================= */
-        void destroy();
-        void startMainCallbackLoop();
+  /*=============================================================================
+    Subsystems
+    =============================================================================*/
+  // Vulkan
+  MVulkanContext *pVulkanContext{nullptr};
+  MSwapchain *pSwapchain{nullptr};
+  MRenderer *pRenderer{nullptr};
 
-        /* # =============================================================================
-           #  Instance info
-           # ============================================================================= */
-        std::string appName;
-        unsigned int windowSize[2]{0, 0};
-        WINDOW_MODE windowMode;
-
-        /* # =============================================================================
-           #  Subsystems
-           # ============================================================================= */
-       //Vulkan
-        MVulkanContext* pVulkanContext{nullptr};
-        MSwapchain* pSwapchain{nullptr};
-
-       //Window creation
-        MWindowHandler* pWindowHandler{nullptr};
-        std::unique_ptr<MWindowHandler> pInitialWindowHandler{nullptr};
-    };
-}
+  // Window creation
+  MWindowHandler *pWindowHandler{nullptr};
+  std::unique_ptr<MWindowHandler> pInitialWindowHandler{nullptr};
+};
+} // namespace Magma

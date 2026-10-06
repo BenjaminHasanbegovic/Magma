@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Uitls/Debugger.h"
-#include "../Uitls/ErrorCodes.h"
+#include "../Utils/Debugger.h"
+#include "../Utils/ErrorCodes.h"
 
 #include <optional>
 #include <string>
@@ -9,15 +9,6 @@
 #include <vulkan/vulkan.h>
 
 namespace Magma {
-
-/*=============================================================================
-  External classes definition
-  =============================================================================*/
-class MDebugger;
-
-/*=============================================================================
-   Main class
-  =============================================================================*/
 class MVulkanContext {
 public:
 
@@ -43,7 +34,7 @@ public:
     Physical device
     =============================================================================*/
   void selectPhysicalDevice();
-  [[nodiscard]] VkPhysicalDevice getPhysicalDeviceDevice() const {
+  [[nodiscard]] VkPhysicalDevice getPhysicalDevice() const {
     return physicalDevice;
   };
 

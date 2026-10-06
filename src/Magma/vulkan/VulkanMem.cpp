@@ -1,1 +1,1 @@
-#include "../../../include/Magma/vulkan/VulkanMem.h"
+#include "../../../include/Magma/Vulkan/VulkanMem.h"

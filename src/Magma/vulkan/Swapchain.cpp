@@ -1,4 +1,4 @@
-#include "../../../include/Magma/vulkan/Swapchain.h"
+#include "../../../include/Magma/Vulkan/Swapchain.h"
 
 using namespace Magma;
 
@@ -22,10 +22,6 @@ MSwapchain::~MSwapchain() {
   pDebugger->print("Destroying swapchain.");
 
   vkDestroySwapchainKHR(pLogicalDevice, Swapchain, nullptr);
-  pDebugger = nullptr;
-  pLogicalDevice = VK_NULL_HANDLE;
-  pSurface = VK_NULL_HANDLE;
-  pPhysicalDevice = VK_NULL_HANDLE;
 };
 
 /*=============================================================================
@@ -44,15 +40,15 @@ void MSwapchain::querySupport() {
     uint32_t surfaceFormatCount{0};
 
     vkGetPhysicalDeviceSurfaceFormatsKHR(pPhysicalDevice, pSurface,
-                                         &surfaceFormatCount, nullptr);
+    &surfaceFormatCount, nullptr);
     if (surfaceFormatCount == 0) {
       throw std::runtime_error("No surface format found.");
     }
 
     surfaceFormats.resize(surfaceFormatCount);
     vkGetPhysicalDeviceSurfaceFormatsKHR(pPhysicalDevice, pSurface,
-                                         &surfaceFormatCount,
-                                         surfaceFormats.data());
+    &surfaceFormatCount,
+    surfaceFormats.data());
 
     pDebugger->print("Fetched surface formats.");
   };
