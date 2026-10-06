@@ -48,7 +48,7 @@ void MInstance::start() {
         pVulkanContext->findMandatoryQueueFamilies();
         pVulkanContext->createLogicalDevice();
 
-        pSwapchain = new MSwapchain(*pDebugger,pVulkanContext->getVkPhysicalDeviceDevice(),pWindowHandler->getVkSurface());
+        pSwapchain = new MSwapchain(*pDebugger,pVulkanContext->getVkPhysicalDeviceDevice(),pVulkanContext->getVkLogicalDevice(),pWindowHandler->getVkSurface());
         pSwapchain->querySupport();
         pSwapchain->create();
 
@@ -78,6 +78,13 @@ void MInstance::startMainCallbackLoop() {
     pDebugger->print("Starting main loop . . .");
     while (isRunning) {
         pWindowHandler->pollEvents(isRunning);
+        if (pWindowHandler->framebufferResized) {
+            uint32_t width, height;
+            pWindowHandler->getFramebufferSize(width, height);
+            pSwapchain->setExtent(width, height);
+
+            pWindowHandler->framebufferResized = false;
+        };
     };
     pDebugger->print("Main loop ended.");
 };

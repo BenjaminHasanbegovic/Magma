@@ -39,14 +39,22 @@ namespace Magma {
         virtual ~MWindowHandler();
 
         /* # =============================================================================
-           #  Window logic (inheritance)
+           #  Window logic
            # ============================================================================= */
         virtual void initWindow() = 0;
         virtual void createWindow() = 0;
+
+       /* # =============================================================================
+         #  OS logic
+         # ============================================================================= */
          static USER_OS getUserOS() {return userOS;};
         static std::vector<const char*>  getOSSpecificExtensions() {return OSSpecificExtensions;};
+
+       /* # =============================================================================
+          #  Resizing logic
+          # ============================================================================= */
         virtual void getFramebufferSize(uint32_t& width, uint32_t& height) const = 0;
-       void resetResizeFlag() { framebufferResized = false; }
+        bool framebufferResized{false};
 
         /* # =============================================================================
            #  Vulkan logic
@@ -67,7 +75,6 @@ namespace Magma {
        WINDOW_MODE mode;
        unsigned int size[2]{}; // [0] width & [1] height
        bool created { false };
-       bool framebufferResized{false};
 
        /* # =============================================================================
           #  Magma

@@ -36,7 +36,7 @@ namespace Magma {
           #  Logical device
           # ============================================================================= */
         void createLogicalDevice();
-
+        [[nodiscard]] VkDevice getVkLogicalDevice() const {return vkLogicalDevice;};
         /*# =============================================================================
           #  Physical device
           # ============================================================================= */
@@ -78,6 +78,7 @@ namespace Magma {
           # ============================================================================= */
         VkDevice vkLogicalDevice = VK_NULL_HANDLE;
         void destroyLogicalDevice();
+        static std::vector<const char*> vkLogicalDeviceExtensions;
 
         /*# =============================================================================
           #  Physical device
@@ -110,5 +111,6 @@ namespace Magma {
          # ============================================================================= */
         static ErrorCode errorCode;
         [[nodiscard]] bool checkInstanceCreationErrors(VkResult result) const;
+         void checkVkLogicalDeviceExtensionsSupport() const;
     };
 };

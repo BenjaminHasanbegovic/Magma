@@ -16,11 +16,12 @@ namespace Magma {
         ~MLinuxHandler() override;
 
         /* # =============================================================================
-           #  Window logic (inheritance)
+           #  Window logic
            # ============================================================================= */
         void initWindow() override;
         void createWindow() override;
         void getFramebufferSize(uint32_t& width, uint32_t& height) const override;
+
         /* # =============================================================================
            #  Event logic
            # ============================================================================= */
