@@ -48,7 +48,7 @@ std::unique_ptr<MWindowHandler> MWindowHandler::create(const std::string& appNam
 /* # =============================================================================
    #  Class init and destruction
    # ============================================================================= */
-MWindowHandler::MWindowHandler(const std::string& appName, WINDOW_MODE windowMode, const unsigned int windowSize[2], MDebugger& debugger)
+MWindowHandler::MWindowHandler(const std::string& appName, const WINDOW_MODE windowMode, const unsigned int windowSize[2], MDebugger& debugger)
     : mode(windowMode), pDebugger(&debugger) {
     size[0] = windowSize[0];
     size[1] = windowSize[1];

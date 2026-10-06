@@ -1,20 +1,25 @@
 #pragma once
 
 #include "../Uitls/Debugger.h"
-
+#include "../Uitls/ErrorCodes.h"
 #include <vulkan/vulkan.h>
 
 namespace Magma {
     class MSwapchain {
     public:
-        explicit MSwapchain(MDebugger& debugger);
+        /* # =============================================================================
+           #  Class init and destruction
+           # ============================================================================= */
+        explicit MSwapchain(MDebugger& debugger, const VkPhysicalDevice& physicalDevice,const VkDevice& logicalDevice,const VkSurfaceKHR& surface);
         ~MSwapchain();
 
         /*# =============================================================================
          #  Swapchain
          # ============================================================================= */
-        void create(VkPhysicalDevice physicalDevice,VkSurfaceKHR surface);
-        VkSurfaceFormatKHR chooseSwapchainFormat() const;
+        void querySupport();
+        void create();
+        void setExtent(uint32_t width, uint32_t height);
+
     private:
         /*# =============================================================================
           #  Debuging
@@ -24,8 +29,21 @@ namespace Magma {
         /*# =============================================================================
           #  Swapchain
           # ============================================================================= */
-        VkSurfaceCapabilitiesKHR surfaceCapabilities;
-        std::vector<VkSurfaceFormatKHR> surfaceFormats;
-        std::vector<VkPresentModeKHR> presentModes;
+        VkSurfaceCapabilitiesKHR vkSurfaceCapabilities{};
+        std::vector<VkSurfaceFormatKHR> vkSurfaceFormats;
+        std::vector<VkPresentModeKHR> vkPresentModes;
+
+        [[nodiscard]] VkSurfaceFormatKHR selectVkFormat() const;
+        [[nodiscard]] VkPresentModeKHR  selectVkPresentMode() const;
+
+        VkSwapchainKHR vkSwapchain{VK_NULL_HANDLE};
+        unsigned int vkSwapchainImageCount{2};
+        std::vector<VkImage> vkSwapchainImages;
+        /*# =============================================================================
+          #  Vulkan info
+          # ============================================================================= */
+        VkSurfaceKHR pVkSurface{VK_NULL_HANDLE};
+        VkPhysicalDevice pVkPhysicalDevice{VK_NULL_HANDLE};
+        VkDevice pVkLogicalDevice{VK_NULL_HANDLE};
     };
 };

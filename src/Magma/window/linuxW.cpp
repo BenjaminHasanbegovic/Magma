@@ -19,7 +19,7 @@ MLinuxHandler::~MLinuxHandler() {
 };
 
        /* # =============================================================================
-          #  Window creation logic
+          #  Window logic
           # ============================================================================= */
 void MLinuxHandler::initWindow() {
  pDebugger->print("Initializing X11 Display . . .");
@@ -108,11 +108,19 @@ void MLinuxHandler::pollEvents(bool &runningState) {
 
  if (event.type == ClientMessage) {
    pDebugger->print("Client message received.");
-   if (static_cast<Atom>(event.xclient.data.l[0]) == wmDeleteMessage) {
-    pDebugger->print("Window close requested.");
-    runningState = false;
-   };
+
+  {
+   //Quiting the app handle
+    if (static_cast<Atom>(event.xclient.data.l[0]) == wmDeleteMessage) {
+     pDebugger->print("Window close requested.");
+     runningState = false;
+    };
+  }
+
   }else if (event.type == ConfigureNotify) {
+   pDebugger->print("Configure notify received.");
+   {
+   //Resize handle
    const auto newWidth = static_cast<uint32_t>(event.xconfigure.width);
    const auto newHeight = static_cast<uint32_t>(event.xconfigure.height);
 
@@ -120,6 +128,7 @@ void MLinuxHandler::pollEvents(bool &runningState) {
     size[0] = newWidth;
     size[1] = newHeight;
     framebufferResized = true;
+   };
    };
   };
  };

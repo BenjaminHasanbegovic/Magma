@@ -14,7 +14,9 @@ ErrorCode MVulkanContext::errorCode = ErrorCode::NO_ERRORS;
 std::vector<const char*> MVulkanContext::enabledExtensions = {
     VK_KHR_SURFACE_EXTENSION_NAME
 };
-
+std::vector<const char*> MVulkanContext::vkLogicalDeviceExtensions = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
     /* # =============================================================================
        #  Class init and destruction
        # ============================================================================= */
@@ -100,7 +102,10 @@ pDebugger->print("Creating logical device . . .");
 
     //Values needed to create logical device
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    const std::set<uint32_t> uniqueQueueFamilies = { graphicsQueueFamilyIndex.value() };
+    const std::set<uint32_t> uniqueQueueFamilies = {
+        graphicsQueueFamilyIndex.value(),
+        presentQueueFamilyIndex.value()
+    };
 
     constexpr float queuePriority = 1.0f;
 
@@ -123,11 +128,13 @@ pDebugger->print("Creating logical device . . .");
     deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
     deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
     deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
-    deviceCreateInfo.enabledExtensionCount = 0;
-    deviceCreateInfo.ppEnabledExtensionNames = nullptr;
+    deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(vkLogicalDeviceExtensions.size());;
+    deviceCreateInfo.ppEnabledExtensionNames = vkLogicalDeviceExtensions.data();
     deviceCreateInfo.enabledLayerCount = 0;
 
     //Error handling
+    checkVkLogicalDeviceExtensionsSupport();
+
     if (vkCreateDevice(vkPhysicalDevice, &deviceCreateInfo, nullptr, &vkLogicalDevice) == VK_SUCCESS) {
         pDebugger->print("Successfully created logical device.");
     } else {
@@ -179,7 +186,6 @@ void MVulkanContext::selectPhysicalDevice() {
             throw std::runtime_error("Failed to find suitable physical device: " + errorCodeToString(errorCode));
         }
     };
-
 
 VkPhysicalDevice MVulkanContext::scorePhysicalDevices(const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList) const {
     pDebugger->print("Scoring a physical devices . . .");
@@ -257,10 +263,10 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(const std::vector<VkPhysic
 
         //Compering scores
         if (currentPhysicalDeviceScore > maxPhysicalDeviceScore) {
-       pDebugger->print("Found a new physical device properties, score: " + std::to_string(maxPhysicalDeviceScore) + ",name: " + deviceName);
-      maxPhysicalDeviceScore = currentPhysicalDeviceScore;
+            maxPhysicalDeviceScore = currentPhysicalDeviceScore;
             suitablePhysicalDevice = physicalDevice;
-    }else if (currentPhysicalDeviceScore < maxPhysicalDeviceScore && maxPhysicalDeviceScore != 0){
+            pDebugger->print("Found a new physical device properties, score: " + std::to_string(maxPhysicalDeviceScore) + ", name: " + deviceName);
+        }else if (currentPhysicalDeviceScore < maxPhysicalDeviceScore && maxPhysicalDeviceScore != 0){
         pDebugger->print("Physical device had a worst score: " + std::to_string(maxPhysicalDeviceScore) + ",name: " + deviceName,MESSAGE_TYPE::INFO);
     };
 };
@@ -369,4 +375,27 @@ bool MVulkanContext::checkInstanceCreationErrors(const VkResult result) const {
         }
         return false;
     }
-}
+};
+
+void MVulkanContext::checkVkLogicalDeviceExtensionsSupport() const {
+    pDebugger->print("Checking physical device extension support . . .");
+
+    uint32_t extensionCount{0};
+    vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, nullptr, &extensionCount, nullptr);
+
+    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+    vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, nullptr, &extensionCount, availableExtensions.data());
+
+    std::set<std::string> requiredExtensions(vkLogicalDeviceExtensions.begin(), vkLogicalDeviceExtensions.end());
+
+    for (const auto& extension : availableExtensions) {
+        requiredExtensions.erase(extension.extensionName);
+    }
+
+
+    if (requiredExtensions.empty()) {
+        pDebugger->print("All required device extensions are supported.");
+    }else {
+        throw std::runtime_error("Missing required device extensions!" + errorCodeToString(ErrorCode::LOGICAL_DEVICE_CREATION_FAILED));
+    };
+};
