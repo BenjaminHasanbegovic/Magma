@@ -138,7 +138,7 @@ void MLinuxHandler::pollEvents(bool &runningState) {
 /*=============================================================================
   Vulkan logic
   =============================================================================*/
-void MLinuxHandler::createVulkanSurface(VkInstance instance) {
+void MLinuxHandler::createSurface(VkInstance instance) {
   pDebugger->print("Creating Vulkan Xlib surface . . .");
 
   VkXlibSurfaceCreateInfoKHR createInfo{};
@@ -146,7 +146,7 @@ void MLinuxHandler::createVulkanSurface(VkInstance instance) {
   createInfo.dpy = display;
   createInfo.window = window;
 
-  if (vkCreateXlibSurfaceKHR(instance, &createInfo, nullptr, &this->pSurface) !=
+  if (vkCreateXlibSurfaceKHR(instance, &createInfo, nullptr, &this->surface) !=
       VK_SUCCESS) {
     errorCode = ErrorCode::SURFACE_CREATION_FAILED;
     throw std::runtime_error("Failed to create Vulkan X11 surface!");

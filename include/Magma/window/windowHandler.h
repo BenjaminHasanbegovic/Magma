@@ -71,8 +71,8 @@ public:
   /*=============================================================================
     Vulkan logic
     =============================================================================*/
-  virtual void createVulkanSurface(VkInstance instance) = 0;
-  [[nodiscard]] VkSurfaceKHR getVkSurface() const { return *pSurface; };
+  virtual void createSurface(VkInstance instance) = 0;
+  [[nodiscard]] VkSurfaceKHR getSurface() const { return surface; };
 
   /*=============================================================================
     Event logic
@@ -102,7 +102,7 @@ protected:
   /*=============================================================================
     Vulkan info
     =============================================================================*/
-  VkSurfaceKHR *pSurface{VK_NULL_HANDLE};
+  VkSurfaceKHR surface{VK_NULL_HANDLE};
 
   /*=============================================================================
     Error handling

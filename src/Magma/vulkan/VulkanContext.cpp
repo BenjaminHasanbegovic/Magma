@@ -295,7 +295,7 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(
     // Compering scores
     if (currentPhysicalDeviceScore > maxPhysicalDeviceScore) {
       maxPhysicalDeviceScore = currentPhysicalDeviceScore;
-      suitablePhysicalDevice = physicalDevice;
+      suitablePhysicalDevice = physicalDeviceCandidate;
       pDebugger->print("Found a new physical device properties, score: " +
                        std::to_string(maxPhysicalDeviceScore) +
                        ", name: " + deviceName);

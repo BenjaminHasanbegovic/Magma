@@ -39,7 +39,7 @@ public:
   /*=============================================================================
     Vulkan logic
     =============================================================================*/
-  void createVulkanSurface(VkInstance instance) override;
+  void createSurface(VkInstance instance) override;
 
 private:
   /*=============================================================================

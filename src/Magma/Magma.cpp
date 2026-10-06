@@ -39,8 +39,8 @@ void MInstance::start() {
     pWindowHandler->initWindow();
     pWindowHandler->createWindow();
 
-    pWindowHandler->createVulkanSurface(pVulkanContext->getInstance());
-    pVulkanContext->setSurface(pWindowHandler->getVkSurface());
+    pWindowHandler->createSurface(pVulkanContext->getInstance());
+    pVulkanContext->setSurface(pWindowHandler->getSurface());
 
     pVulkanContext->selectPhysicalDevice();
     pVulkanContext->findMandatoryQueueFamilies();
@@ -48,7 +48,7 @@ void MInstance::start() {
 
     pSwapchain = new MSwapchain(
         *pDebugger, pVulkanContext->getPhysicalDeviceDevice(),
-        pVulkanContext->getLogicalDevice(), pWindowHandler->getVkSurface());
+        pVulkanContext->getLogicalDevice(), pWindowHandler->getSurface());
     pSwapchain->querySupport();
     pSwapchain->create();
 
