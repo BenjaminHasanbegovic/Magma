@@ -3,114 +3,111 @@
 #include "../Uitls/Debugger.h"
 #include "../Uitls/ErrorCodes.h"
 
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
 #include <vulkan/vulkan.h>
 
-
 namespace Magma {
-    /* # =============================================================================
-          #  External classes definition
-          # ============================================================================= */
-    class MDebugger;
 
-    /* # =============================================================================
-        #  Main class
-        # ============================================================================= */
-    class MVulkanContext {
-    public:
-        /* # =============================================================================
-           #  Class init and destruction
-           # ============================================================================= */
-        MVulkanContext(const std::string& appName,MDebugger& debugger);
-        ~MVulkanContext();
+/*=============================================================================
+  External classes definition
+  =============================================================================*/
+class MDebugger;
 
-        /*# =============================================================================
-          #  Vulkan instance
-          # ============================================================================= */
-        void createInstance();
-        [[nodiscard]] VkInstance getVkInstance() const {return vkInstance;};
-        void setVkSurface(const VkSurfaceKHR &surface){VkSurface = surface;};
-        /*# =============================================================================
-          #  Logical device
-          # ============================================================================= */
-        void createLogicalDevice();
-        [[nodiscard]] VkDevice getVkLogicalDevice() const {return vkLogicalDevice;};
-        /*# =============================================================================
-          #  Physical device
-          # ============================================================================= */
-        void selectPhysicalDevice();
-        [[nodiscard]] VkPhysicalDevice getVkPhysicalDeviceDevice() const {return vkPhysicalDevice;};
+/*=============================================================================
+   Main class
+  =============================================================================*/
+class MVulkanContext {
+public:
 
-      /* # =============================================================================
-           #  Os handling
-           # ============================================================================= */
-            static void setOSExtensions(unsigned int OS,const std::vector<const char*>& OSExtensions);
+  /*=============================================================================
+    Class init and destruction
+    =============================================================================*/
+  MVulkanContext(const std::string &appName, MDebugger &debugger);
+  ~MVulkanContext();
 
-        /*# =============================================================================
-          #  Device queue
-          # ============================================================================= */
-      void findMandatoryQueueFamilies() const;
+  /*=============================================================================
+    Vulkan instance
+    =============================================================================*/
+  void createInstance();
+  [[nodiscard]] VkInstance getInstance() const { return instance; };
 
-    private:
+  /*=============================================================================
+    Logical device
+    =============================================================================*/
+  void createLogicalDevice();
+  [[nodiscard]] VkDevice getLogicalDevice() const { return logicalDevice; };
 
-        /* # =============================================================================
-           #  Magma instance
-           # ============================================================================= */
-        const char *pAppName{nullptr};
-        MDebugger *pDebugger{nullptr};
+  /*=============================================================================
+    Physical device
+    =============================================================================*/
+  void selectPhysicalDevice();
+  [[nodiscard]] VkPhysicalDevice getPhysicalDeviceDevice() const {
+    return physicalDevice;
+  };
 
-      /* # =============================================================================
-         #  Os handling
-         # ============================================================================= */
-      static std::vector<const char*> enabledExtensions;
+  /*=============================================================================
+    OS
+    =============================================================================*/
+  static void setOSExtensions(unsigned int OS,
+                              const std::vector<const char *> &OSExtensions);
 
-        /*# =============================================================================
-          #  Vulkan instance
-         # ============================================================================= */
-        VkInstance vkInstance = VK_NULL_HANDLE;
-        VkSurfaceKHR VkSurface = VK_NULL_HANDLE;
-        void destroyVulkanInstance();
+  /*=============================================================================
+    Vulkan surface
+    =============================================================================*/
+  void setSurface(const VkSurfaceKHR &surface) { pSurface = surface; };
 
-        /*# =============================================================================
-          #  Logical device
-          # ============================================================================= */
-        VkDevice vkLogicalDevice = VK_NULL_HANDLE;
-        void destroyLogicalDevice();
-        static std::vector<const char*> vkLogicalDeviceExtensions;
+  /*=============================================================================
+    Queue families
+    =============================================================================*/
+  void findMandatoryQueueFamilies() const;
 
-        /*# =============================================================================
-          #  Physical device
-          # ============================================================================= */
-        VkPhysicalDevice vkPhysicalDevice = VK_NULL_HANDLE;
-        VkPhysicalDeviceProperties vkPhysicalDeviceProperties{};
-        VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures{};
-        [[nodiscard]] VkPhysicalDevice scorePhysicalDevices(const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList) const;
+private:
+  /*=============================================================================
+    Magma instance
+    =============================================================================*/
+  const char *pAppName{nullptr};
+  MDebugger *pDebugger{nullptr};
 
-        /*# =============================================================================
-          #  Device queue
-          # ============================================================================= */
-        static std::optional<uint32_t> graphicsQueueFamilyIndex;
-        static std::optional<uint32_t> presentQueueFamilyIndex;
+  /*=============================================================================
+    OS
+    =============================================================================*/
+  static std::vector<const char *> enabledExtensions;
 
-        /*# =============================================================================
-          #  Swapchain
-          # ============================================================================= */
-            VkSurfaceCapabilitiesKHR capabilities{};
-            std::vector<VkSurfaceFormatKHR> formats;
-            std::vector<VkPresentModeKHR> presentModes;
+  /*=============================================================================
+    Vulkan instance
+    =============================================================================*/
+  VkInstance instance = VK_NULL_HANDLE;
+  VkSurfaceKHR pSurface = VK_NULL_HANDLE;
+  void destroyInstance();
 
-            [[nodiscard]] bool isSuitable() const {
-                return !formats.empty() && !presentModes.empty();
-            }
+  /*=============================================================================
+    Logical device
+    =============================================================================*/
+  VkDevice logicalDevice = VK_NULL_HANDLE;
+  void destroyLogicalDevice();
+  static std::vector<const char *> logicalDeviceExtensions;
 
+  /*=============================================================================
+    Physical device
+    =============================================================================*/
+  VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+  VkPhysicalDeviceProperties physicalDeviceProperties{};
+  VkPhysicalDeviceFeatures physicalDeviceFeatures{};
+  [[nodiscard]] VkPhysicalDevice scorePhysicalDevices(
+      const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList) const;
 
-        /*# =============================================================================
-         #  Error handling
-         # ============================================================================= */
-        static ErrorCode errorCode;
-        [[nodiscard]] bool checkInstanceCreationErrors(VkResult result) const;
-         void checkVkLogicalDeviceExtensionsSupport() const;
-    };
+  /*=============================================================================
+    Queue families
+    =============================================================================*/
+  static std::optional<uint32_t> graphicsQueueFamilyIndex;
+  static std::optional<uint32_t> presentQueueFamilyIndex;
+
+  /*=============================================================================
+    Error handling
+    =============================================================================*/
+  void checkInstanceCreationErrors(VkResult result) const;
+  void checkVkLogicalDeviceExtensionsSupport() const;
 };
+}; // namespace Magma
