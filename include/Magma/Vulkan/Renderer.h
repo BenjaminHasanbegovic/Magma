@@ -1,33 +1,55 @@
 #pragma once
 
 #include "../Utils/Debugger.h"
+#include "../Utils/ErrorCodes.h"
 #include <vector>
 #include <vulkan/vulkan.h>
-#include <stdexcept>
 
 namespace Magma {
 class MRenderer {
 public:
-  MRenderer(VkDevice device, VkSwapchainKHR &swapchain, uint32_t &swapchainImageCount,
+  /*=============================================================================
+    Class init and destruction
+    =============================================================================*/
+  MRenderer(VkDevice logicalDevice, VkSwapchainKHR &swapchain,
+            uint32_t &swapchainImageCount,
             const std::vector<VkImage> &swapchainImages,
             std::vector<VkImageView> &swapchainImagesViews,
-            MDebugger &debugger);
+            VkExtent2D swapchainExtent, MDebugger &debugger);
   ~MRenderer();
 
+  /*=============================================================================
+    Swapchain
+    =============================================================================*/
+  // Images
   void createImageViews(VkFormat imageFormat) const;
   void destroyImageViews() const;
+  // Framebuffer
+  void createFramebuffers();
+  void destroyFramebuffers() const;
 
 private:
   /*=============================================================================
-    Handles and references
+    Vulkan context
     =============================================================================*/
-  VkDevice vkDevice{VK_NULL_HANDLE};
+  VkDevice *pLogicalDevice{VK_NULL_HANDLE};
+
+  /*=============================================================================
+     Swapchain
+    =============================================================================*/
   VkSwapchainKHR *pSwapchain{nullptr};
+  VkExtent2D *pSwapchainExtents{nullptr};
+  // Images
   uint32_t *pSwapchainImageCount{nullptr};
+  const std::vector<VkImage> &rSwapchainImages;
+  std::vector<VkImageView> &rSwapchainImagesViews;
+  // Framebuffer
+  VkRenderPass renderPass{VK_NULL_HANDLE};
+  std::vector<VkFramebuffer> swapchainFramebuffers;
 
-  const std::vector<VkImage> &pSwapchainImages;
-  std::vector<VkImageView> &pSwapchainImagesViews;
-
+  /*=============================================================================
+    Debugging
+    =============================================================================*/
   MDebugger *pDebugger{nullptr};
 };
-};
+}; // namespace Magma

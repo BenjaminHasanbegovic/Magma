@@ -55,7 +55,7 @@ void MInstance::start() {
     pRenderer =
         new MRenderer(pVulkanContext->getLogicalDevice(),
                       pSwapchain->getSwapchain(), pSwapchain->getImageCount(),
-                      pSwapchain->getImages(), pSwapchain->getImageViews(),*pDebugger);
+                      pSwapchain->getImages(), pSwapchain->getImageViews(),pSwapchain->getExtent(),*pDebugger);
 
 
     isRunning = true;
@@ -88,6 +88,11 @@ void MInstance::destroy() {
   };
 
   // The order of destruction is important !!!
+
+  //Render handle
+  delete pRenderer;
+  pRenderer = nullptr;
+
   // Swapchain handle
   delete pSwapchain;
   pSwapchain = nullptr;

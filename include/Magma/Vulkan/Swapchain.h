@@ -24,11 +24,12 @@ public:
   void create();
   void setExtent(uint32_t width, uint32_t height);
 
-  //Getters
-  [[nodiscard]] unsigned int &getImageCount() {return swapchainImageCount;};
-  [[nodiscard]] std::vector<VkImage> &getImages() {return swapchainImages;};
-  [[nodiscard]] VkSwapchainKHR &getSwapchain() {return Swapchain;};
-  [[nodiscard]] std::vector<VkImageView> &getImageViews() {return swapchainImageViews;};
+  // Getters
+  [[nodiscard]] unsigned int &getImageCount() { return swapchainImageCount; };
+  [[nodiscard]] std::vector<VkImage> &getImages() { return swapchainImages; };
+  [[nodiscard]] VkSwapchainKHR &getSwapchain() { return Swapchain; };
+  [[nodiscard]] std::vector<VkImageView> &getImageViews() { return swapchainImageViews;};
+  [[nodiscard]] VkExtent2D &getExtent() { return extent; };
 
 private:
   /*=============================================================================
@@ -39,17 +40,25 @@ private:
   /*=============================================================================
     Swapchain
     =============================================================================*/
-  // Info
+  VkSwapchainKHR Swapchain{VK_NULL_HANDLE};
+  unsigned int swapchainImageCount{2};
+  VkExtent2D extent{.width = 1, .height = 1};
+
+  /*=============================================================================
+    Surface
+    =============================================================================*/
   VkSurfaceCapabilitiesKHR surfaceCapabilities{};
   std::vector<VkSurfaceFormatKHR> surfaceFormats;
   std::vector<VkPresentModeKHR> presentModes;
-  VkSwapchainKHR Swapchain{VK_NULL_HANDLE};
-  unsigned int swapchainImageCount{2};
+
+  [[nodiscard]] VkSurfaceFormatKHR selectFormat() const;
+  [[nodiscard]] VkPresentModeKHR selectPresentMode() const;
+
+  /*=============================================================================
+    Images
+    =============================================================================*/
   std::vector<VkImage> swapchainImages;
   std::vector<VkImageView> swapchainImageViews;
-
-  [[nodiscard]] VkSurfaceFormatKHR selectVkFormat() const;
-  [[nodiscard]] VkPresentModeKHR selectVkPresentMode() const;
 
   /*=============================================================================
     Vulkan info
