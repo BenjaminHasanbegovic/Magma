@@ -30,6 +30,7 @@ public:
   [[nodiscard]] VkSwapchainKHR &getSwapchain() { return Swapchain; };
   [[nodiscard]] std::vector<VkImageView> &getImageViews() { return swapchainImageViews;};
   [[nodiscard]] VkExtent2D &getExtent() { return extent; };
+  [[nodiscard]] VkSurfaceFormatKHR getSurfaceFormat() const { return surfaceFormat; };
 
 private:
   /*=============================================================================
@@ -49,9 +50,10 @@ private:
     =============================================================================*/
   VkSurfaceCapabilitiesKHR surfaceCapabilities{};
   std::vector<VkSurfaceFormatKHR> surfaceFormats;
+   VkSurfaceFormatKHR surfaceFormat{};
   std::vector<VkPresentModeKHR> presentModes;
 
-  [[nodiscard]] VkSurfaceFormatKHR selectFormat() const;
+  [[nodiscard]] VkSurfaceFormatKHR selectFormat();
   [[nodiscard]] VkPresentModeKHR selectPresentMode() const;
 
   /*=============================================================================

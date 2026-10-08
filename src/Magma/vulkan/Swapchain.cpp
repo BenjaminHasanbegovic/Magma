@@ -142,7 +142,7 @@ void MSwapchain::setExtent(const uint32_t width, const uint32_t height) {
 /*=============================================================================
   Surface
   =============================================================================*/
-VkSurfaceFormatKHR MSwapchain::selectFormat() const {
+VkSurfaceFormatKHR MSwapchain::selectFormat()  {
   pDebugger->print("Selecting surface format . . .");
 
   // Error handling
@@ -155,6 +155,7 @@ VkSurfaceFormatKHR MSwapchain::selectFormat() const {
          availableFormat.format == VK_FORMAT_R8G8B8A8_SRGB) &&
         availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
       pDebugger->print("Selected optimal sRGB surface format.");
+      surfaceFormat = availableFormat;
       return availableFormat;
     };
   };

@@ -15,30 +15,36 @@ public:
             uint32_t &swapchainImageCount,
             const std::vector<VkImage> &swapchainImages,
             std::vector<VkImageView> &swapchainImagesViews,
-            VkExtent2D swapchainExtent, MDebugger &debugger);
+            VkExtent2D swapchainExtent,VkSurfaceFormatKHR surfaceFormat ,MDebugger &debugger);
   ~MRenderer();
 
   /*=============================================================================
     Swapchain
     =============================================================================*/
   // Images
-  void createImageViews(VkFormat imageFormat) const;
+  void createImageViews() const;
   void destroyImageViews() const;
   // Framebuffer
   void createFramebuffers();
   void destroyFramebuffers() const;
+  // Command pool
+  void createCommandPool(uint32_t graphicsQueueFamilyIndex);
+  void destroyCommandPool() const;
+  void createCommandBuffers();
 
 private:
   /*=============================================================================
     Vulkan context
     =============================================================================*/
-  VkDevice *pLogicalDevice{VK_NULL_HANDLE};
+  VkDevice logicalDevice{VK_NULL_HANDLE};
 
   /*=============================================================================
      Swapchain
     =============================================================================*/
   VkSwapchainKHR *pSwapchain{nullptr};
   VkExtent2D *pSwapchainExtents{nullptr};
+  //Surface
+  VkSurfaceFormatKHR surfaceFormat{};
   // Images
   uint32_t *pSwapchainImageCount{nullptr};
   const std::vector<VkImage> &rSwapchainImages;
@@ -46,6 +52,9 @@ private:
   // Framebuffer
   VkRenderPass renderPass{VK_NULL_HANDLE};
   std::vector<VkFramebuffer> swapchainFramebuffers;
+  // Command pool
+  VkCommandPool commandPool{VK_NULL_HANDLE};
+ std::vector<VkCommandBuffer> commandBuffers;
 
   /*=============================================================================
     Debugging

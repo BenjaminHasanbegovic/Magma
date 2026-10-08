@@ -22,21 +22,16 @@ public:
     Vulkan instance
     =============================================================================*/
   void createInstance();
-  [[nodiscard]] VkInstance getInstance() const { return instance; };
 
   /*=============================================================================
     Logical device
     =============================================================================*/
   void createLogicalDevice();
-  [[nodiscard]] VkDevice getLogicalDevice() const { return logicalDevice; };
 
   /*=============================================================================
     Physical device
     =============================================================================*/
   void selectPhysicalDevice();
-  [[nodiscard]] VkPhysicalDevice getPhysicalDevice() const {
-    return physicalDevice;
-  };
 
   /*=============================================================================
     OS
@@ -53,6 +48,14 @@ public:
     Queue families
     =============================================================================*/
   void findMandatoryQueueFamilies() const;
+
+  /*=============================================================================
+    Getters
+    =============================================================================*/
+  [[nodiscard]] VkPhysicalDevice getPhysicalDevice() const {return physicalDevice;};
+  [[nodiscard]] VkDevice getLogicalDevice() const { return logicalDevice; };
+  [[nodiscard]] VkInstance getInstance() const { return instance; };
+  static uint32_t getGraphicsQueueFamilyIndex() { return graphicsQueueFamilyIndex.value(); };
 
 private:
   /*=============================================================================
