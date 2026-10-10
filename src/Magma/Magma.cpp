@@ -46,22 +46,14 @@ void MInstance::start() {
     pVulkanContext->findMandatoryQueueFamilies();
     pVulkanContext->createLogicalDevice();
 
-    pSwapchain = new MSwapchain(*pDebugger, pVulkanContext->getPhysicalDevice(),
-                                pVulkanContext->getLogicalDevice(),
-                                pWindowHandler->getSurface());
-    pSwapchain->querySupport();
-    pSwapchain->create();
-
-    pRenderer = new MRenderer(
-        pVulkanContext->getLogicalDevice(), pSwapchain->getSwapchain(),
-        pSwapchain->getImageCount(), pSwapchain->getImages(),
-        pSwapchain->getImageViews(), pSwapchain->getExtent(),
-        pSwapchain->getSurfaceFormat(), *pDebugger);
-    pRenderer->createImageViews();
-    pRenderer->createFramebuffers();
-pRenderer->createCommandPool(MVulkanContext::getGraphicsQueueFamilyIndex());
-pRenderer->createCommandBuffers();
-pRenderer->createRenderPass();
+    pRenderer = new MRenderer(*pDebugger, pVulkanContext->getPhysicalDevice(),pVulkanContext->getLogicalDevice(),pWindowHandler->getSurface());
+    pRenderer->querySwapchainSupport();
+    pRenderer->createSwapchain();
+     pRenderer->createImageViews();
+     pRenderer->createFramebuffers();
+     pRenderer->createCommandPool(MVulkanContext::getGraphicsQueueFamilyIndex());
+     pRenderer->createCommandBuffers();
+     pRenderer->createRenderPass();
 
     isRunning = true;
     pDebugger->print("Created magma instance.");
@@ -94,10 +86,6 @@ void MInstance::destroy() {
   delete pRenderer;
   pRenderer = nullptr;
 
-  // Swapchain handle
-  delete pSwapchain;
-  pSwapchain = nullptr;
-
   // Window handle
   pInitialWindowHandler.reset();
   pInitialWindowHandler = nullptr;
@@ -122,7 +110,7 @@ void MInstance::startMainCallbackLoop() {
     if (pWindowHandler->framebufferResized) {
       uint32_t width, height;
       pWindowHandler->getFramebufferSize(width, height);
-      pSwapchain->setExtent(width, height);
+      pRenderer->setExtent(width, height);
 
       pWindowHandler->framebufferResized = false;
     };
