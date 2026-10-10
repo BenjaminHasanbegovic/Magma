@@ -1,4 +1,4 @@
-#include "../../../include/Magma/window/linuxW.h"
+#include "../../../include/Magma/Window/linuxW.h"
 
 using namespace Magma;
 
@@ -17,7 +17,6 @@ MLinuxHandler::~MLinuxHandler() {
   if (display != nullptr) {
     pDebugger->print("Destroying Linux X11 window . . .");
     XCloseDisplay(display);
-    pDebugger->print("Destroyed Linux X11 window.");
   };
 };
 

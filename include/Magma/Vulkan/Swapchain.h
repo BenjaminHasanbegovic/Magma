@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Uitls/Debugger.h"
-#include "../Uitls/ErrorCodes.h"
+#include "../Utils/Debugger.h"
+#include "../Utils/ErrorCodes.h"
 #include <bits/fs_fwd.h>
 #include <vulkan/vulkan.h>
 
@@ -24,6 +24,14 @@ public:
   void create();
   void setExtent(uint32_t width, uint32_t height);
 
+  // Getters
+  [[nodiscard]] unsigned int &getImageCount() { return swapchainImageCount; };
+  [[nodiscard]] std::vector<VkImage> &getImages() { return swapchainImages; };
+  [[nodiscard]] VkSwapchainKHR &getSwapchain() { return Swapchain; };
+  [[nodiscard]] std::vector<VkImageView> &getImageViews() { return swapchainImageViews;};
+  [[nodiscard]] VkExtent2D &getExtent() { return extent; };
+  [[nodiscard]] VkSurfaceFormatKHR getSurfaceFormat() const { return surfaceFormat; };
+
 private:
   /*=============================================================================
     Debuging
@@ -33,16 +41,26 @@ private:
   /*=============================================================================
     Swapchain
     =============================================================================*/
-  // Info
-  VkSurfaceCapabilitiesKHR surfaceCapabilities{};
-  std::vector<VkSurfaceFormatKHR> surfaceFormats;
-  std::vector<VkPresentModeKHR> presentModes;
   VkSwapchainKHR Swapchain{VK_NULL_HANDLE};
   unsigned int swapchainImageCount{2};
-  std::vector<VkImage> swapchainImages;
+  VkExtent2D extent{.width = 1, .height = 1};
 
-  [[nodiscard]] VkSurfaceFormatKHR selectVkFormat() const;
-  [[nodiscard]] VkPresentModeKHR selectVkPresentMode() const;
+  /*=============================================================================
+    Surface
+    =============================================================================*/
+  VkSurfaceCapabilitiesKHR surfaceCapabilities{};
+  std::vector<VkSurfaceFormatKHR> surfaceFormats;
+   VkSurfaceFormatKHR surfaceFormat{};
+  std::vector<VkPresentModeKHR> presentModes;
+
+  [[nodiscard]] VkSurfaceFormatKHR selectFormat();
+  [[nodiscard]] VkPresentModeKHR selectPresentMode() const;
+
+  /*=============================================================================
+    Images
+    =============================================================================*/
+  std::vector<VkImage> swapchainImages;
+  std::vector<VkImageView> swapchainImageViews;
 
   /*=============================================================================
     Vulkan info

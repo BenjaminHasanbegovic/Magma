@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Uitls/Debugger.h"
-#include "../Uitls/ErrorCodes.h"
+#include "../Utils/Debugger.h"
+#include "../Utils/ErrorCodes.h"
 
 #include <optional>
 #include <string>
@@ -9,15 +9,6 @@
 #include <vulkan/vulkan.h>
 
 namespace Magma {
-
-/*=============================================================================
-  External classes definition
-  =============================================================================*/
-class MDebugger;
-
-/*=============================================================================
-   Main class
-  =============================================================================*/
 class MVulkanContext {
 public:
 
@@ -31,21 +22,16 @@ public:
     Vulkan instance
     =============================================================================*/
   void createInstance();
-  [[nodiscard]] VkInstance getInstance() const { return instance; };
 
   /*=============================================================================
     Logical device
     =============================================================================*/
   void createLogicalDevice();
-  [[nodiscard]] VkDevice getLogicalDevice() const { return logicalDevice; };
 
   /*=============================================================================
     Physical device
     =============================================================================*/
   void selectPhysicalDevice();
-  [[nodiscard]] VkPhysicalDevice getPhysicalDeviceDevice() const {
-    return physicalDevice;
-  };
 
   /*=============================================================================
     OS
@@ -62,6 +48,14 @@ public:
     Queue families
     =============================================================================*/
   void findMandatoryQueueFamilies() const;
+
+  /*=============================================================================
+    Getters
+    =============================================================================*/
+  [[nodiscard]] VkPhysicalDevice getPhysicalDevice() const {return physicalDevice;};
+  [[nodiscard]] VkDevice getLogicalDevice() const { return logicalDevice; };
+  [[nodiscard]] VkInstance getInstance() const { return instance; };
+  static uint32_t getGraphicsQueueFamilyIndex() { return graphicsQueueFamilyIndex.value(); };
 
 private:
   /*=============================================================================

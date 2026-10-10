@@ -29,8 +29,8 @@ target_link_libraries(Magma PRIVATE
         PkgConfig::XCB
 )
 
-if (ENABLE_DEBUG)
+if(ENABLE_DEBUG)
     target_compile_definitions(Magma PRIVATE DEBUG_MODE=1)
-else ()
+else()
     target_compile_definitions(Magma PRIVATE DEBUG_MODE=0)
-endif ()
+endif()

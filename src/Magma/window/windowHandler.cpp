@@ -1,4 +1,4 @@
-#include "../../../include/Magma/window/windowHandler.h"
+#include "../../../include/Magma/Window/windowHandler.h"
 
 using namespace Magma;
 
@@ -6,7 +6,7 @@ using namespace Magma;
   Getting user OS
   =============================================================================*/
 #ifdef __linux__
-#include "../../../include/Magma/window/linuxW.h"
+#include "../../../include/Magma/Window/linuxW.h"
 #include <vulkan/vulkan_xlib.h>
 std::vector<const char *> MWindowHandler::OSSpecificExtensions = {
     VK_KHR_XLIB_SURFACE_EXTENSION_NAME};

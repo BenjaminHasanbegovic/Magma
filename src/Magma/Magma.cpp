@@ -46,11 +46,22 @@ void MInstance::start() {
     pVulkanContext->findMandatoryQueueFamilies();
     pVulkanContext->createLogicalDevice();
 
-    pSwapchain = new MSwapchain(
-        *pDebugger, pVulkanContext->getPhysicalDeviceDevice(),
-        pVulkanContext->getLogicalDevice(), pWindowHandler->getSurface());
+    pSwapchain = new MSwapchain(*pDebugger, pVulkanContext->getPhysicalDevice(),
+                                pVulkanContext->getLogicalDevice(),
+                                pWindowHandler->getSurface());
     pSwapchain->querySupport();
     pSwapchain->create();
+
+    pRenderer = new MRenderer(
+        pVulkanContext->getLogicalDevice(), pSwapchain->getSwapchain(),
+        pSwapchain->getImageCount(), pSwapchain->getImages(),
+        pSwapchain->getImageViews(), pSwapchain->getExtent(),
+        pSwapchain->getSurfaceFormat(), *pDebugger);
+    pRenderer->createImageViews();
+    pRenderer->createFramebuffers();
+pRenderer->createCommandPool(MVulkanContext::getGraphicsQueueFamilyIndex());
+pRenderer->createCommandBuffers();
+pRenderer->createRenderPass();
 
     isRunning = true;
     pDebugger->print("Created magma instance.");
@@ -77,11 +88,12 @@ void MInstance::stop() {
   Lifecycle
   =============================================================================*/
 void MInstance::destroy() {
-  if (pDebugger) {
-    pDebugger->print("Destroying magma instance . . .");
-  };
-
+  pDebugger->print("Destroying magma instance . . .");
   // The order of destruction is important !!!
+  // Render handle
+  delete pRenderer;
+  pRenderer = nullptr;
+
   // Swapchain handle
   delete pSwapchain;
   pSwapchain = nullptr;

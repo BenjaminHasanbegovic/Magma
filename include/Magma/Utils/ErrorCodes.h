@@ -65,7 +65,14 @@ enum class ErrorCode : ERROR_CODE {
   BUFFER_CREATION_FAILED = 6000,
   IMAGE_CREATION_FAILED = 6001,
   MEMORY_ALLOCATION_FAILED = 6002,
-  MEMORY_MAP_FAILED = 6003
+  MEMORY_MAP_FAILED = 6003,
+
+  /*=============================================================================
+    Renderer Errors
+    =============================================================================*/
+  RENDERER_INITIALIZATION_FAILED = 7000,
+  IMAGE_VIEWS_CREATION_FAILED = 7001,
+  FRAMEBUFFER_CREATION_FAILED = 7002
 };
 
 /*=============================================================================
@@ -163,6 +170,15 @@ errorCodeToString(const ErrorCode code) noexcept {
   case ErrorCode::MEMORY_MAP_FAILED:
     return "MEMORY_MAP_FAILED";
 
+  // Renderer
+  case ErrorCode::RENDERER_INITIALIZATION_FAILED:
+    return "RENDERER_INITIALIZATION_FAILED";
+
+  case ErrorCode::IMAGE_VIEWS_CREATION_FAILED:
+    return "IMAGE_VIEWS_CREATION_FAILED";
+
+  case ErrorCode::FRAMEBUFFER_CREATION_FAILED:
+    return "FRAMEBUFFER_CREATION_FAILED";
   default:
     return "ERROR_CODE: " + std::to_string(static_cast<int>(code));
   };

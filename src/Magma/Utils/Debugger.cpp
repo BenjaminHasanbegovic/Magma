@@ -1,4 +1,4 @@
-#include "../../../include/Magma/Uitls/Debugger.h"
+#include "../../../include/Magma/Utils/Debugger.h"
 
 #include <iostream>
 

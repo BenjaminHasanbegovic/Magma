@@ -1,4 +1,4 @@
-#include "../../../include/Magma/vulkan/VulkanContext.h"
+#include "../../../include/Magma/Vulkan/VulkanContext.h"
 #include "../../../include/Magma/Magma.h"
 #include <set>
 #include <xcb/xcb.h>
@@ -29,20 +29,16 @@ MVulkanContext::MVulkanContext(const std::string &appName,
 };
 
 MVulkanContext::~MVulkanContext() {
-  pDebugger->print("Destroying vulkan context.");
+  pDebugger->print("Destroying Vulkan context.");
   destroyLogicalDevice();
   destroyInstance();
-
-  // Destroy remaining pointers
-  pDebugger = nullptr;
-  pAppName = nullptr;
 };
 
 /*=============================================================================
   Vulkan instance
   =============================================================================*/
 void MVulkanContext::createInstance() {
-  pDebugger->print("Creating vulkan instance . . .");
+  pDebugger->print("Creating Vulkan instance . . .");
 
   // Define data needed for creation info of Vulkan Instance
   pDebugger->print("Generating app info . . .");
@@ -69,17 +65,17 @@ void MVulkanContext::createInstance() {
   checkInstanceCreationErrors(
       vkCreateInstance(&instanceCreateInfo, nullptr, &instance));
 
-  pDebugger->print("Created vulkan instance.");
+  pDebugger->print("Created Vulkan instance.");
 };
 
 void MVulkanContext::destroyInstance() {
   if (instance != VK_NULL_HANDLE) {
-    pDebugger->print("Destroying vulkan instance . . .");
+    pDebugger->print("Destroying Vulkan instance . . .");
 
     vkDestroyInstance(instance, nullptr);
     instance = VK_NULL_HANDLE;
 
-    pDebugger->print("Destroyed vulkan instance.");
+    pDebugger->print("Destroyed Vulkan instance.");
   };
 };
 
@@ -439,7 +435,7 @@ void MVulkanContext::checkInstanceCreationErrors(const VkResult result) const {
       errorCode = ErrorCode::INSTANCE_CREATION_FAILED;
       break;
 
-      throw std::runtime_error("Failed to create vulkan instance:" +
+      throw std::runtime_error("Failed to create Vulkan instance:" +
                                errorCodeToString(errorCode));
     };
   };

@@ -1,4 +1,4 @@
-#include "../../../include/Magma/vulkan/Swapchain.h"
+#include "../../../include/Magma/Vulkan/Swapchain.h"
 
 using namespace Magma;
 
@@ -9,7 +9,6 @@ MSwapchain::MSwapchain(MDebugger &debugger,
                        const VkPhysicalDevice &physicalDevice,
                        const VkDevice &logicalDevice,
                        const VkSurfaceKHR &surface) {
-  // Set needed values
   pPhysicalDevice = physicalDevice;
   pLogicalDevice = logicalDevice;
   pSurface = surface;
@@ -22,10 +21,6 @@ MSwapchain::~MSwapchain() {
   pDebugger->print("Destroying swapchain.");
 
   vkDestroySwapchainKHR(pLogicalDevice, Swapchain, nullptr);
-  pDebugger = nullptr;
-  pLogicalDevice = VK_NULL_HANDLE;
-  pSurface = VK_NULL_HANDLE;
-  pPhysicalDevice = VK_NULL_HANDLE;
 };
 
 /*=============================================================================
@@ -50,9 +45,8 @@ void MSwapchain::querySupport() {
     }
 
     surfaceFormats.resize(surfaceFormatCount);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(pPhysicalDevice, pSurface,
-                                         &surfaceFormatCount,
-                                         surfaceFormats.data());
+    vkGetPhysicalDeviceSurfaceFormatsKHR(
+        pPhysicalDevice, pSurface, &surfaceFormatCount, surfaceFormats.data());
 
     pDebugger->print("Fetched surface formats.");
   };
@@ -87,7 +81,68 @@ void MSwapchain::querySupport() {
   pDebugger->print("Created swapchain.");
 };
 
-VkSurfaceFormatKHR MSwapchain::selectVkFormat() const {
+void MSwapchain::create() {
+  pDebugger->print("Creating swapchain . . .");
+
+  const auto [format, colorSpace] = selectFormat();
+
+  swapchainImageCount = surfaceCapabilities.minImageCount + 1;
+  if (surfaceCapabilities.maxImageCount > 0 &&
+      swapchainImageCount > surfaceCapabilities.maxImageCount) {
+    swapchainImageCount = surfaceCapabilities.maxImageCount;
+  };
+
+  VkSwapchainCreateInfoKHR createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+  createInfo.surface = pSurface;
+  createInfo.minImageCount = swapchainImageCount;
+  createInfo.imageFormat = format;
+  createInfo.imageColorSpace = colorSpace;
+  createInfo.imageArrayLayers = 1;
+  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  createInfo.preTransform = surfaceCapabilities.currentTransform;
+  createInfo.imageExtent = surfaceCapabilities.currentExtent;
+  createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  createInfo.presentMode = selectPresentMode();
+  createInfo.compositeAlpha =
+      VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; // Reminder: Move to window handler
+  // logic
+  createInfo.clipped = VK_TRUE;
+  createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+  // Creating the swapchain
+  if (vkCreateSwapchainKHR(pLogicalDevice, &createInfo, nullptr, &Swapchain) !=
+      VK_SUCCESS) {
+    throw std::runtime_error(
+        "Failed to create Vulkan Swapchain!" +
+        errorCodeToString(ErrorCode::SWAPCHAIN_CREATION_FAILED));
+  };
+
+  // Retrieve the handle of swapchain image
+  vkGetSwapchainImagesKHR(pLogicalDevice, Swapchain, &swapchainImageCount,
+                          nullptr);
+  swapchainImages.resize(swapchainImageCount);
+  vkGetSwapchainImagesKHR(pLogicalDevice, Swapchain, &swapchainImageCount,
+                          swapchainImages.data());
+
+  pDebugger->print("Created swapchain.");
+};
+
+void MSwapchain::setExtent(const uint32_t width, const uint32_t height) {
+  pDebugger->print("Setting surface extent . . .");
+
+  surfaceCapabilities.currentExtent.width = width;
+  surfaceCapabilities.currentExtent.height = height;
+
+  extent = {.width = width, .height = height};
+
+  pDebugger->print("Set the surface extent.");
+};
+
+/*=============================================================================
+  Surface
+  =============================================================================*/
+VkSurfaceFormatKHR MSwapchain::selectFormat()  {
   pDebugger->print("Selecting surface format . . .");
 
   // Error handling
@@ -100,6 +155,7 @@ VkSurfaceFormatKHR MSwapchain::selectVkFormat() const {
          availableFormat.format == VK_FORMAT_R8G8B8A8_SRGB) &&
         availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
       pDebugger->print("Selected optimal sRGB surface format.");
+      surfaceFormat = availableFormat;
       return availableFormat;
     };
   };
@@ -111,7 +167,7 @@ VkSurfaceFormatKHR MSwapchain::selectVkFormat() const {
   return surfaceFormats[0];
 }
 
-VkPresentModeKHR MSwapchain::selectVkPresentMode() const {
+VkPresentModeKHR MSwapchain::selectPresentMode() const {
   pDebugger->print("Selecting present mode . . .");
 
   // Error handling
@@ -133,60 +189,4 @@ VkPresentModeKHR MSwapchain::selectVkPresentMode() const {
                    "VK_PRESENT_MODE_FIFO_KHR.",
                    MESSAGE_TYPE::WARNING);
   return VK_PRESENT_MODE_FIFO_KHR;
-};
-
-void MSwapchain::setExtent(const uint32_t width, const uint32_t height) {
-  pDebugger->print("Setting surface extent . . .");
-
-  surfaceCapabilities.currentExtent.width = width;
-  surfaceCapabilities.currentExtent.height = height;
-
-  pDebugger->print("Set the surface extent.");
-};
-
-void MSwapchain::create() {
-  pDebugger->print("Creating swapchain . . .");
-
-  const auto [format, colorSpace] = selectVkFormat();
-
-  swapchainImageCount = surfaceCapabilities.minImageCount + 1;
-  if (surfaceCapabilities.maxImageCount > 0 &&
-      swapchainImageCount > surfaceCapabilities.maxImageCount) {
-    swapchainImageCount = surfaceCapabilities.maxImageCount;
-  };
-
-  VkSwapchainCreateInfoKHR createInfo = {};
-  createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-  createInfo.surface = pSurface;
-  createInfo.minImageCount = swapchainImageCount;
-  createInfo.imageFormat = format;
-  createInfo.imageColorSpace = colorSpace;
-  createInfo.imageArrayLayers = 1;
-  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-  createInfo.preTransform = surfaceCapabilities.currentTransform;
-  createInfo.imageExtent = surfaceCapabilities.currentExtent;
-  createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  createInfo.presentMode = selectVkPresentMode();
-  createInfo.compositeAlpha =
-      VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; // Reminder: Move to window handler
-                                         // logic
-  createInfo.clipped = VK_TRUE;
-  createInfo.oldSwapchain = VK_NULL_HANDLE;
-
-  // Creating the swapchain
-  if (vkCreateSwapchainKHR(pLogicalDevice, &createInfo, nullptr,
-                           &Swapchain) != VK_SUCCESS) {
-    throw std::runtime_error(
-        "Failed to create Vulkan Swapchain!" +
-        errorCodeToString(ErrorCode::SWAPCHAIN_CREATION_FAILED));
-  };
-
-  // Retrieve the handle of swapchain image
-  vkGetSwapchainImagesKHR(pLogicalDevice, Swapchain, &swapchainImageCount,
-                          nullptr);
-  swapchainImages.resize(swapchainImageCount);
-  vkGetSwapchainImagesKHR(pLogicalDevice, Swapchain, &swapchainImageCount,
-                          swapchainImages.data());
-
-  pDebugger->print("Created swapchain.");
 };
