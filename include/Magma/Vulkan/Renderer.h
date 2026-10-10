@@ -31,6 +31,8 @@ public:
   void createCommandPool(uint32_t graphicsQueueFamilyIndex);
   void destroyCommandPool() const;
   void createCommandBuffers();
+  void createRenderPass();
+  void destroyRenderPass() const;
 
 private:
   /*=============================================================================

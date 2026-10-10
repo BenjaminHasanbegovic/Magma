@@ -61,6 +61,7 @@ void MInstance::start() {
     pRenderer->createFramebuffers();
 pRenderer->createCommandPool(MVulkanContext::getGraphicsQueueFamilyIndex());
 pRenderer->createCommandBuffers();
+pRenderer->createRenderPass();
 
     isRunning = true;
     pDebugger->print("Created magma instance.");

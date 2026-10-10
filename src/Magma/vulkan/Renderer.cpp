@@ -26,6 +26,7 @@ MRenderer::~MRenderer() {
 
   destroyCommandPool();
   destroyFramebuffers();
+  destroyRenderPass();
   destroyImageViews();
 
   pSwapchain = nullptr;
@@ -114,6 +115,58 @@ void MRenderer::destroyFramebuffers() const {
     pDebugger->print("Destroying framebuffer . . .");
     vkDestroyFramebuffer(logicalDevice, framebuffer, nullptr);
   };
+};
+
+void MRenderer::createRenderPass() {
+  pDebugger->print("Creating render pass . . .");
+
+  //Color attachments
+  pDebugger->print("Setting the color attachment to the render pass . . .");
+VkAttachmentDescription colorAttachment{};
+  colorAttachment.format = surfaceFormat.format;
+  colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+  VkAttachmentReference colorAttachmentRef{};
+  colorAttachmentRef.attachment = 0;
+  colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  pDebugger->print("Set the color attachment.");
+
+  //Subpass
+  pDebugger->print("Setting the subpass to the render pass . . .");
+  VkSubpassDescription subpass{};
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments = &colorAttachmentRef;
+  pDebugger->print("Set the sub pass.");
+
+  //Final: render pass creation
+  pDebugger->print("Setting the info for the render pass . . .");
+  VkRenderPassCreateInfo createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+  createInfo.attachmentCount = 1;
+  createInfo.pAttachments = &colorAttachment;
+  createInfo.subpassCount = 1;
+  createInfo.pSubpasses = &subpass;
+  createInfo.dependencyCount = 0;
+  createInfo.pDependencies = nullptr;
+  pDebugger->print("Set the info for the render pass.");
+
+  if (vkCreateRenderPass(logicalDevice, &createInfo, nullptr, &renderPass) != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create render pass!");
+  };
+
+  pDebugger->print("Created render pass.");
+};
+
+void MRenderer::destroyRenderPass() const {
+  pDebugger->print("Destroying render pass . . .");
+  vkDestroyRenderPass(logicalDevice, renderPass, nullptr);
 };
 // Command pool
 void MRenderer::createCommandPool(const uint32_t graphicsQueueFamilyIndex) {
