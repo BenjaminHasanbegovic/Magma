@@ -2,7 +2,6 @@
 
 #include "Utils/Debugger.h"
 #include "Utils/ErrorCodes.h"
-#include "Vulkan/Swapchain.h"
 #include "Vulkan/VulkanContext.h"
 #include "Window/windowHandler.h"
 #include "Vulkan/Renderer.h"
@@ -55,7 +54,6 @@ private:
     =============================================================================*/
   // Vulkan
   MVulkanContext *pVulkanContext{nullptr};
-  MSwapchain *pSwapchain{nullptr};
   MRenderer *pRenderer{nullptr};
 
   // Window creation
