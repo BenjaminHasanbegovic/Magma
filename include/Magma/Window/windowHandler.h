@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../Utils/Debugger.h"
-#include "../Utils/ErrorCodes.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -107,7 +106,6 @@ protected:
   /*=============================================================================
     Error handling
     =============================================================================*/
-  static ErrorCode errorCode;
   MDebugger *pDebugger{nullptr};
 };
 }; // namespace Magma

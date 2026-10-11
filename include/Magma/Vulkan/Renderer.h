@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../Utils/Debugger.h"
-#include "../Utils/ErrorCodes.h"
 #include <vector>
 #include <vulkan/vulkan.h>
 
@@ -11,23 +10,36 @@ public:
   /*=============================================================================
     Class init and destruction
     =============================================================================*/
-  MRenderer(VkDevice logicalDevice, VkSwapchainKHR &swapchain,
-            uint32_t &swapchainImageCount,
-            const std::vector<VkImage> &swapchainImages,
-            std::vector<VkImageView> &swapchainImagesViews,
-            VkExtent2D swapchainExtent,VkSurfaceFormatKHR surfaceFormat ,MDebugger &debugger);
+  MRenderer(MDebugger &debugger, const VkPhysicalDevice &physicalDevice,
+            const VkDevice &logicalDevice, const VkSurfaceKHR &surface);
   ~MRenderer();
 
   /*=============================================================================
     Swapchain
     =============================================================================*/
+  void createSwapchain();
+  void destroySwapchain() const;
+  void querySwapchainSupport();
+  void setExtent(uint32_t width, uint32_t height);
   // Images
-  void createImageViews() const;
-  void destroyImageViews() const;
-  // Framebuffer
+  void createImageViews();
+  void destroyImageViews();
+
+  /*=============================================================================
+    Framebuffer
+    =============================================================================*/
   void createFramebuffers();
   void destroyFramebuffers() const;
-  // Command pool
+
+  /*=============================================================================
+    Surface
+    =============================================================================*/
+   void selectSurfaceFormat();
+   void selectPresentMode();
+
+  /*=============================================================================
+    Command pool
+    =============================================================================*/
   void createCommandPool(uint32_t graphicsQueueFamilyIndex);
   void destroyCommandPool() const;
   void createCommandBuffers();
@@ -36,27 +48,38 @@ public:
 
 private:
   /*=============================================================================
-    Vulkan context
-    =============================================================================*/
-  VkDevice logicalDevice{VK_NULL_HANDLE};
-
-  /*=============================================================================
      Swapchain
     =============================================================================*/
-  VkSwapchainKHR *pSwapchain{nullptr};
-  VkExtent2D *pSwapchainExtents{nullptr};
-  //Surface
-  VkSurfaceFormatKHR surfaceFormat{};
-  // Images
-  uint32_t *pSwapchainImageCount{nullptr};
-  const std::vector<VkImage> &rSwapchainImages;
-  std::vector<VkImageView> &rSwapchainImagesViews;
-  // Framebuffer
-  VkRenderPass renderPass{VK_NULL_HANDLE};
+  VkSwapchainKHR Swapchain{VK_NULL_HANDLE};
   std::vector<VkFramebuffer> swapchainFramebuffers;
-  // Command pool
+  // Images
+  unsigned int swapchainImageCount{2};
+  std::vector<VkImage> swapchainImages;
+  std::vector<VkImageView> swapchainImageViews;
+
+  /*=============================================================================
+    Surface
+    =============================================================================*/
+  VkSurfaceKHR Surface{VK_NULL_HANDLE};
+  VkSurfaceFormatKHR surfaceFormat{};
+  std::vector<VkSurfaceFormatKHR> surfaceFormats;
+  VkPresentModeKHR surfacePresentMode;
+  std::vector<VkPresentModeKHR> surfacePresentModes;
+  VkSurfaceCapabilitiesKHR surfaceCapabilities{};
+  VkExtent2D extent{.width = 1, .height = 1};
+
+  /*=============================================================================
+    Command pool
+    =============================================================================*/
   VkCommandPool commandPool{VK_NULL_HANDLE};
- std::vector<VkCommandBuffer> commandBuffers;
+  std::vector<VkCommandBuffer> commandBuffers;
+  VkRenderPass renderPass{VK_NULL_HANDLE};
+
+  /*=============================================================================
+    Vulkan info
+    =============================================================================*/
+  VkPhysicalDevice physicalDevice{VK_NULL_HANDLE};
+  VkDevice logicalDevice{VK_NULL_HANDLE};
 
   /*=============================================================================
     Debugging

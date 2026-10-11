@@ -88,8 +88,7 @@ void MVulkanContext::setOSExtensions(
     enabledExtensions.insert(enabledExtensions.end(), OSExtensions.begin(),
                              OSExtensions.end());
   } else {
-    throw std::runtime_error("Failed to set OSExtensions:" +
-                             errorCodeToString(ErrorCode::OS_NOT_SUPPORTED));
+    throw std::runtime_error("Failed to set OSExtensions!");
   };
 };
 
@@ -139,9 +138,7 @@ void MVulkanContext::createLogicalDevice() {
                      &logicalDevice) == VK_SUCCESS) {
     pDebugger->print("Successfully created logical device.");
   } else {
-    throw std::runtime_error(
-        "Failed to crate logical device: " +
-        errorCodeToString(ErrorCode::LOGICAL_DEVICE_CREATION_FAILED));
+    throw std::runtime_error("Failed to crate logical device!");
   };
 };
 
@@ -169,9 +166,7 @@ void MVulkanContext::selectPhysicalDevice() {
     pDebugger->print("Found " + std::to_string(physicalDeviceCount) +
                      " physical device(s).");
   } else {
-    throw std::runtime_error(
-        "Failed to find physical device with Vulkan support: " +
-        errorCodeToString(ErrorCode::NO_PHYSICAL_DEVICES_FOUND));
+    throw std::runtime_error("Failed to find physical device with Vulkan support!");
   };
 
   std::vector<VkPhysicalDevice> physicalDevicesList(physicalDeviceCount);
@@ -308,9 +303,7 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(
   pDebugger->print("Scored all physical devices.");
 
   if (suitablePhysicalDevice == VK_NULL_HANDLE) {
-    throw std::runtime_error(
-        "Could not find a suitable physical device: " +
-        errorCodeToString(ErrorCode::NO_SUITABLE_PHYSICAL_DEVICE));
+    throw std::runtime_error("Could not find a suitable physical device!");
     return VK_NULL_HANDLE;
   } else {
     pDebugger->print("Found a suitable physical device.");
@@ -359,14 +352,11 @@ void MVulkanContext::findMandatoryQueueFamilies() const {
   // Error handling
   if (!graphicsQueueFamilyIndex.has_value()) {
     throw std::runtime_error(
-        "Couldn't find the graphics queue family: " +
-        errorCodeToString(ErrorCode::NO_GRAPHICAL_QUEUE_INDEX_FOUND));
+        "Couldn't find the graphics queue family!");
   }
 
   if (!presentQueueFamilyIndex.has_value()) {
-    throw std::runtime_error(
-        "Couldn't find the present queue family: " +
-        errorCodeToString(ErrorCode::PRESENT_QUEUE_SUBMIT_FAILED));
+    throw std::runtime_error("Couldn't find the present queue family!");
   };
 };
 
@@ -379,26 +369,24 @@ void MVulkanContext::checkInstanceCreationErrors(const VkResult result) const {
   if (result == VK_SUCCESS) {
     pDebugger->print("No errors found.");
   } else {
-    ErrorCode errorCode;
     switch (result) {
     case VK_ERROR_INCOMPATIBLE_DRIVER:
       pDebugger->print("The Vulkan loader cannot find a driver that supports "
                        "the requested API version or hardware requirements.",
                        MESSAGE_TYPE::ERROR);
-      errorCode = ErrorCode::INCOMPATIBLE_DRIVER;
-      break;
 
+      break;
     case VK_ERROR_OUT_OF_HOST_MEMORY:
       pDebugger->print("The host CPU system ran out of system memory.",
                        MESSAGE_TYPE::ERROR);
-      errorCode = ErrorCode::OUT_OF_MEMORY;
+
       break;
 
     case VK_ERROR_TOO_MANY_OBJECTS:
       pDebugger->print("Exceeded maximum number of active Vulkan instances "
                        "supported by the driver.",
                        MESSAGE_TYPE::ERROR);
-      errorCode = ErrorCode::OUT_OF_MEMORY;
+
       break;
 
     case VK_ERROR_OUT_OF_DEVICE_MEMORY:
@@ -411,32 +399,26 @@ void MVulkanContext::checkInstanceCreationErrors(const VkResult result) const {
       pDebugger->print("The Vulkan loader or implementation failed to "
                        "initialize for an unspecified internal reason.",
                        MESSAGE_TYPE::ERROR);
-      errorCode = ErrorCode::INSTANCE_CREATION_FAILED;
+
       break;
 
     case VK_ERROR_LAYER_NOT_PRESENT:
       pDebugger->print("One or more requested instance validation layers could "
                        "not be found.",
                        MESSAGE_TYPE::ERROR);
-      errorCode = ErrorCode::VULKAN_LAYER_MISSING;
       break;
 
     case VK_ERROR_EXTENSION_NOT_PRESENT:
       pDebugger->print("One or more requested instance extensions are not "
                        "supported by the loader or installed drivers.",
                        MESSAGE_TYPE::ERROR);
-      errorCode = ErrorCode::VULKAN_EXTENSION_MISSING;
       break;
 
     default:
       pDebugger->print("An unknown critical error occurred within the Vulkan "
                        "driver or loader.",
                        MESSAGE_TYPE::ERROR);
-      errorCode = ErrorCode::INSTANCE_CREATION_FAILED;
       break;
-
-      throw std::runtime_error("Failed to create Vulkan instance:" +
-                               errorCodeToString(errorCode));
     };
   };
 };
@@ -463,7 +445,6 @@ void MVulkanContext::checkVkLogicalDeviceExtensionsSupport() const {
     pDebugger->print("All required device extensions are supported.");
   } else {
     throw std::runtime_error(
-        "Missing required device extensions!" +
-        errorCodeToString(ErrorCode::LOGICAL_DEVICE_CREATION_FAILED));
+        "Missing required device extensions!");
   };
 };

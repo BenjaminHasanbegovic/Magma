@@ -5,19 +5,11 @@ using namespace Magma;
 /*=============================================================================
   Class init and destruction
   =============================================================================*/
-MRenderer::MRenderer(VkDevice logicalDevice, VkSwapchainKHR &swapchain,
-                     uint32_t &swapchainImageCount,
-                     const std::vector<VkImage> &swapchainImages,
-                     std::vector<VkImageView> &swapchainImagesViews,
-                     VkExtent2D swapchainExtent,
-                     const VkSurfaceFormatKHR surfaceFormat,MDebugger &debugger)
-    :logicalDevice(logicalDevice) ,pSwapchain(&swapchain),surfaceFormat(surfaceFormat) ,pSwapchainImageCount(&swapchainImageCount),
-      rSwapchainImages(swapchainImages),
-      rSwapchainImagesViews(swapchainImagesViews), pDebugger(&debugger) {
-
-
-  pSwapchainExtents = &swapchainExtent;
-
+MRenderer::MRenderer(MDebugger &debugger,
+                     const VkPhysicalDevice &physicalDevice,
+                     const VkDevice &logicalDevice, const VkSurfaceKHR &surface)
+    : Surface(surface), physicalDevice(physicalDevice),
+      logicalDevice(logicalDevice), pDebugger(&debugger) {
   pDebugger->print("Initializing renderer . . .");
 };
 
@@ -28,24 +20,141 @@ MRenderer::~MRenderer() {
   destroyFramebuffers();
   destroyRenderPass();
   destroyImageViews();
+  destroySwapchain();
 
-  pSwapchain = nullptr;
-  pSwapchainImageCount = nullptr;
+  Swapchain = nullptr;
   pDebugger = nullptr;
-  pSwapchainExtents = nullptr;
 };
 
 /*=============================================================================
   Swapchain
   =============================================================================*/
-void MRenderer::createImageViews() const {
-  pDebugger->print("Creating swapchain image views . . .");
-  rSwapchainImagesViews.resize(rSwapchainImages.size());
+void MRenderer::createSwapchain() {
+pDebugger->print("Creating swapchain . . .");
 
-  for (size_t i = 0; i < rSwapchainImages.size(); i++) {
+  selectSurfaceFormat();
+selectPresentMode();
+
+  swapchainImageCount = surfaceCapabilities.minImageCount + 1;
+  if (surfaceCapabilities.maxImageCount > 0 &&
+      swapchainImageCount > surfaceCapabilities.maxImageCount) {
+    swapchainImageCount = surfaceCapabilities.maxImageCount;
+  };
+
+  VkSwapchainCreateInfoKHR createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+  createInfo.surface = Surface;
+  createInfo.minImageCount = swapchainImageCount;
+  createInfo.imageFormat = surfaceFormat.format;
+  createInfo.imageColorSpace =  surfaceFormat.colorSpace;
+  createInfo.imageArrayLayers = 1;
+  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  createInfo.preTransform = surfaceCapabilities.currentTransform;
+  createInfo.imageExtent = surfaceCapabilities.currentExtent;
+  createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  createInfo.presentMode = surfacePresentMode;
+  createInfo.compositeAlpha =
+      VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; // Reminder: Move to window handler
+  // logic
+  createInfo.clipped = VK_TRUE;
+  createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+  // Creating the swapchain
+  if (vkCreateSwapchainKHR(logicalDevice, &createInfo, nullptr, &Swapchain) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("Failed to create Vulkan Swapchain!");
+  };
+
+  // Retrieve the handle of swapchain image
+  vkGetSwapchainImagesKHR(logicalDevice, Swapchain, &swapchainImageCount,
+                          nullptr);
+  swapchainImages.resize(swapchainImageCount);
+  vkGetSwapchainImagesKHR(logicalDevice, Swapchain, &swapchainImageCount,
+                          swapchainImages.data());
+
+  pDebugger->print("Created swapchain.");
+};
+
+void MRenderer::destroySwapchain() const {
+  pDebugger->print("Destroying swapchain.");
+
+  vkDestroySwapchainKHR(logicalDevice, Swapchain, nullptr);
+};
+
+void MRenderer::querySwapchainSupport() {
+  pDebugger->print("Querying swapchain support . . .");
+
+  auto getSurfaceCapabilities = [this]() {
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, Surface,
+                                              &surfaceCapabilities);
+    pDebugger->print("Fetched surface capabilities.");
+  };
+
+  auto getSurfaceFormats = [this]() {
+    uint32_t surfaceFormatCount{0};
+
+    vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, Surface,
+                                         &surfaceFormatCount, nullptr);
+    if (surfaceFormatCount == 0) {
+      throw std::runtime_error("No surface format found.");
+    }
+
+    surfaceFormats.resize(surfaceFormatCount);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(
+        physicalDevice, Surface, &surfaceFormatCount, surfaceFormats.data());
+
+    pDebugger->print("Fetched surface formats.");
+  };
+
+  auto getSurfacePresentMode = [this]() {
+    uint32_t presentModeCount = 0;
+    VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(
+        physicalDevice, Surface, &presentModeCount, nullptr);
+
+    if (result != VK_SUCCESS) {
+      throw std::runtime_error("Failed to query surface present mode count.");
+    };
+
+    if (presentModeCount == 0) {
+      throw std::runtime_error("No surface present modes available.");
+    };
+
+    surfacePresentModes.resize(presentModeCount);
+    result = vkGetPhysicalDeviceSurfacePresentModesKHR(
+        physicalDevice, Surface, &presentModeCount, surfacePresentModes.data());
+    if (result == VK_SUCCESS) {
+      pDebugger->print("Fetched surface present modes.");
+    } else {
+      throw std::runtime_error("Failed to retrieve surface present modes.");
+    };
+  };
+
+  getSurfaceCapabilities();
+  getSurfaceFormats();
+  getSurfacePresentMode();
+
+  pDebugger->print("Swapchain supported.");
+};
+
+void MRenderer::setExtent(const uint32_t width, const uint32_t height) {
+  pDebugger->print("Setting surface extent . . .");
+
+  surfaceCapabilities.currentExtent.width = width;
+  surfaceCapabilities.currentExtent.height = height;
+
+  extent = {.width = width, .height = height};
+
+  pDebugger->print("Set the surface extent.");
+};
+// Images
+void MRenderer::createImageViews() {
+  pDebugger->print("Creating swapchain image views . . .");
+  swapchainImageViews.resize(swapchainImages.size());
+
+  for (size_t i = 0; i < swapchainImages.size(); i++) {
     VkImageViewCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    createInfo.image = rSwapchainImages[i];
+    createInfo.image = swapchainImages[i];
     createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
     createInfo.format = surfaceFormat.format;
 
@@ -61,33 +170,35 @@ void MRenderer::createImageViews() const {
     createInfo.subresourceRange.layerCount = 1;
 
     if (vkCreateImageView(logicalDevice, &createInfo, nullptr,
-                          &rSwapchainImagesViews[i]) != VK_SUCCESS) {
+                          &swapchainImageViews[i]) != VK_SUCCESS) {
       throw std::runtime_error(
-          "Failed to create swapchain image views!" +
-          errorCodeToString(ErrorCode::IMAGE_VIEWS_CREATION_FAILED));
+          "Failed to create swapchain image views!");
     };
   };
   pDebugger->print("Created swapchain image views.");
 };
 
-void MRenderer::destroyImageViews() const {
+void MRenderer::destroyImageViews() {
   pDebugger->print("Destroying swapchain image views . . .");
-  for (const auto view : rSwapchainImagesViews) {
+  for (const auto view : swapchainImageViews) {
     if (view != VK_NULL_HANDLE) {
       vkDestroyImageView(logicalDevice, view, nullptr);
     };
   };
-  rSwapchainImagesViews.clear();
+  swapchainImageViews.clear();
 };
-//Framebuffer
+
+/*=============================================================================
+  Framebuffer
+  =============================================================================*/
 void MRenderer::createFramebuffers() {
   pDebugger->print("Creating framebuffers . . .");
 
-  swapchainFramebuffers.resize(rSwapchainImagesViews.size());
+  swapchainFramebuffers.resize(swapchainImageViews.size());
 
-  for (size_t i = 0; i < rSwapchainImagesViews.size(); i++) {
+  for (size_t i = 0; i < swapchainImageViews.size(); i++) {
     const VkImageView attachments[] = {
-        rSwapchainImagesViews[i],
+        swapchainImageViews[i],
     };
 
     VkFramebufferCreateInfo createInfo{};
@@ -95,14 +206,13 @@ void MRenderer::createFramebuffers() {
     createInfo.renderPass = renderPass;
     createInfo.attachmentCount = 1;
     createInfo.pAttachments = attachments;
-    createInfo.width = pSwapchainExtents->width;
-    createInfo.height = pSwapchainExtents->height;
+    createInfo.width = extent.width;
+    createInfo.height = extent.height;
     createInfo.layers = 1;
 
     if (vkCreateFramebuffer(logicalDevice, &createInfo, nullptr,
                             &swapchainFramebuffers[i]) != VK_SUCCESS) {
-      throw std::runtime_error("Failed to create framebuffers: " + errorCodeToString(ErrorCode::FRAMEBUFFER_CREATION_FAILED));
-    };
+      throw std::runtime_error("Failed to create framebuffers!");};
   };
 
   pDebugger->print("Created framebuffers.");
@@ -120,9 +230,9 @@ void MRenderer::destroyFramebuffers() const {
 void MRenderer::createRenderPass() {
   pDebugger->print("Creating render pass . . .");
 
-  //Color attachments
+  // Color attachments
   pDebugger->print("Setting the color attachment to the render pass . . .");
-VkAttachmentDescription colorAttachment{};
+  VkAttachmentDescription colorAttachment{};
   colorAttachment.format = surfaceFormat.format;
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -137,7 +247,7 @@ VkAttachmentDescription colorAttachment{};
   colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   pDebugger->print("Set the color attachment.");
 
-  //Subpass
+  // Subpass
   pDebugger->print("Setting the subpass to the render pass . . .");
   VkSubpassDescription subpass{};
   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -145,7 +255,7 @@ VkAttachmentDescription colorAttachment{};
   subpass.pColorAttachments = &colorAttachmentRef;
   pDebugger->print("Set the sub pass.");
 
-  //Final: render pass creation
+  // Final: render pass creation
   pDebugger->print("Setting the info for the render pass . . .");
   VkRenderPassCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -157,7 +267,8 @@ VkAttachmentDescription colorAttachment{};
   createInfo.pDependencies = nullptr;
   pDebugger->print("Set the info for the render pass.");
 
-  if (vkCreateRenderPass(logicalDevice, &createInfo, nullptr, &renderPass) != VK_SUCCESS) {
+  if (vkCreateRenderPass(logicalDevice, &createInfo, nullptr, &renderPass) !=
+      VK_SUCCESS) {
     throw std::runtime_error("Failed to create render pass!");
   };
 
@@ -168,16 +279,71 @@ void MRenderer::destroyRenderPass() const {
   pDebugger->print("Destroying render pass . . .");
   vkDestroyRenderPass(logicalDevice, renderPass, nullptr);
 };
-// Command pool
+
+/*=============================================================================
+  Surface
+  =============================================================================*/
+void MRenderer::selectSurfaceFormat() {
+  pDebugger->print("Selecting surface format . . .");
+
+  // Error handling
+  if (surfaceFormats.empty())
+    throw std::runtime_error(
+        "Cannot choose swapchain format: surfaceFormats vector is empty.");
+
+  for (const auto &availableFormat : surfaceFormats) {
+    if ((availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB ||
+         availableFormat.format == VK_FORMAT_R8G8B8A8_SRGB) &&
+        availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+      pDebugger->print("Selected optimal sRGB surface format.");
+      surfaceFormat = availableFormat;
+        };
+  };
+
+  // Fallback
+  pDebugger->print("Preferred sRGB format not found. Falling back to first available format.",
+                   MESSAGE_TYPE::WARNING);
+  surfaceFormat = surfaceFormats[0];
+};
+
+void MRenderer::selectPresentMode() {
+  pDebugger->print("Selecting present mode . . .");
+
+  // Error handling
+  if (surfacePresentModes.empty())
+    throw std::runtime_error(
+        "Cannot choose swapchain present mode: presentModes vector is empty.");
+
+  // Look for the optimal present mode
+  for (const auto &availablePresentMode : surfacePresentModes) {
+    if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+      surfacePresentMode = availablePresentMode;
+      pDebugger->print("Selected present mode VK_PRESENT_MODE_MAILBOX_KHR.");
+      break;
+    };
+  };
+
+  // Fallback if the MAILBOX present mode is not available
+  pDebugger->print("Couldn't find the wanted present mode fallback was chosen: "
+                   "VK_PRESENT_MODE_FIFO_KHR.",
+                   MESSAGE_TYPE::WARNING);
+  surfacePresentMode =  VK_PRESENT_MODE_FIFO_KHR;
+};
+
+/*=============================================================================
+  Command pool
+  =============================================================================*/
 void MRenderer::createCommandPool(const uint32_t graphicsQueueFamilyIndex) {
-  pDebugger->print("Creating command pool, queue family index:, " + std::to_string(graphicsQueueFamilyIndex) + " . . .");
+  pDebugger->print("Creating command pool, queue family index:, " +
+                   std::to_string(graphicsQueueFamilyIndex) + " . . .");
 
   VkCommandPoolCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   createInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
   createInfo.flags = 0;
 
-  if (vkCreateCommandPool(logicalDevice, &createInfo, nullptr,&commandPool) != VK_SUCCESS) {
+  if (vkCreateCommandPool(logicalDevice, &createInfo, nullptr, &commandPool) !=
+      VK_SUCCESS) {
     throw std::runtime_error("Failed to create command pool!");
   };
 
@@ -195,7 +361,7 @@ void MRenderer::destroyCommandPool() const {
 void MRenderer::createCommandBuffers() {
   pDebugger->print("Creating command buffers . . .");
 
-  commandBuffers.resize(rSwapchainImagesViews.size());
+  commandBuffers.resize(swapchainImageViews.size());
 
   VkCommandBufferAllocateInfo allocInfo{};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -203,7 +369,8 @@ void MRenderer::createCommandBuffers() {
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-  if (vkAllocateCommandBuffers(logicalDevice, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+  if (vkAllocateCommandBuffers(logicalDevice, &allocInfo,
+                               commandBuffers.data()) != VK_SUCCESS) {
     throw std::runtime_error("Failed to allocate command buffers!");
   };
 

@@ -28,7 +28,6 @@ USER_OS MWindowHandler::userOS = UNSUPPORTED;
 /*=============================================================================
   Explicit static values declaration
   =============================================================================*/
-ErrorCode MWindowHandler::errorCode = ErrorCode::NO_ERRORS;
 // Window creation logic
 std::unique_ptr<MWindowHandler>
 MWindowHandler::create(const std::string &appName, WINDOW_MODE windowMode,
@@ -43,7 +42,6 @@ MWindowHandler::create(const std::string &appName, WINDOW_MODE windowMode,
                                            debugger);
     break;
   default:
-    errorCode = ErrorCode::OS_NOT_SUPPORTED;
     throw std::runtime_error("The OS isn't supported.");
   };
 };
