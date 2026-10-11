@@ -26,16 +26,13 @@ MInstance::~MInstance() { destroy(); };
   =============================================================================*/
 void MInstance::start() {
   pDebugger->print("Starting magma instance . . .");
-
-  isRunning = true;
-
+  startPerformanceTestTimer();
   try {
     MVulkanContext::setOSExtensions(MWindowHandler::getUserOS(),
                                     MWindowHandler::getOSSpecificExtensions());
     pVulkanContext->createInstance();
 
-    pWindowHandler = pInitialWindowHandler
-                         .release(); // Set the window handler to OS specific
+    pWindowHandler = pInitialWindowHandler.release(); // Set the window handler to OS specific
     pWindowHandler->initWindow();
     pWindowHandler->createWindow();
 
@@ -49,14 +46,17 @@ void MInstance::start() {
     pRenderer = new MRenderer(*pDebugger, pVulkanContext->getPhysicalDevice(),pVulkanContext->getLogicalDevice(),pWindowHandler->getSurface());
     pRenderer->querySwapchainSupport();
     pRenderer->createSwapchain();
+
      pRenderer->createImageViews();
      pRenderer->createFramebuffers();
+
      pRenderer->createCommandPool(MVulkanContext::getGraphicsQueueFamilyIndex());
      pRenderer->createCommandBuffers();
      pRenderer->createRenderPass();
 
     isRunning = true;
     pDebugger->print("Created magma instance.");
+    stopPerformanceTestTimer();
     startMainCallbackLoop();
   } catch (std::exception &e) {
     isRunning = false;
@@ -81,6 +81,7 @@ void MInstance::stop() {
   =============================================================================*/
 void MInstance::destroy() {
   pDebugger->print("Destroying magma instance . . .");
+  startPerformanceTestTimer();
   // The order of destruction is important !!!
   // Render handle
   delete pRenderer;
@@ -96,6 +97,7 @@ void MInstance::destroy() {
   delete pVulkanContext;
   pVulkanContext = nullptr;
 
+  stopPerformanceTestTimer();
   // Debugger handle
   delete pDebugger;
   pDebugger = nullptr;
@@ -117,3 +119,24 @@ void MInstance::startMainCallbackLoop() {
   };
   pDebugger->print("Main loop ended.");
 };
+
+/*=============================================================================
+  Debugging
+  =============================================================================*/
+void MInstance::startPerformanceTestTimer() {
+  if (!DEBUG_MODE  && !performanceTestTimerStarted) return;
+  performanceTestTimestamp = std::chrono::steady_clock::now();
+  pDebugger->print("Started performance timer.");
+}
+
+void MInstance::stopPerformanceTestTimer() {
+  if (!DEBUG_MODE) return;
+  auto endTime = std::chrono::steady_clock::now();
+
+  // Calculate elapsed time in milliseconds
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+      endTime - performanceTestTimestamp
+  ).count();
+
+  pDebugger->print("Stopped performance test timer.\nFinal time: " + std::to_string(duration) + " ms.");
+}

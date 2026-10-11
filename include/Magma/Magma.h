@@ -1,12 +1,11 @@
 #pragma once
 
 #include "Utils/Debugger.h"
-#include "Utils/ErrorCodes.h"
 #include "Vulkan/VulkanContext.h"
 #include "Window/windowHandler.h"
 #include "Vulkan/Renderer.h"
-
 #include <string>
+#include <chrono>
 
 namespace Magma {
 class MInstance {
@@ -30,6 +29,12 @@ private:
     Debuging
     =============================================================================*/
   MDebugger *pDebugger{nullptr};
+  //Timer
+  std::chrono::time_point<std::chrono::steady_clock> performanceTestTimestamp{};
+  bool performanceTestTimerStarted{false};
+  void startPerformanceTestTimer();
+  void stopPerformanceTestTimer();
+
 
   /*=============================================================================
     State control

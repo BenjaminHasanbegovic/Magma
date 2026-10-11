@@ -62,9 +62,7 @@ selectPresentMode();
   // Creating the swapchain
   if (vkCreateSwapchainKHR(logicalDevice, &createInfo, nullptr, &Swapchain) !=
       VK_SUCCESS) {
-    throw std::runtime_error(
-        "Failed to create Vulkan Swapchain!" +
-        errorCodeToString(ErrorCode::SWAPCHAIN_CREATION_FAILED));
+    throw std::runtime_error("Failed to create Vulkan Swapchain!");
   };
 
   // Retrieve the handle of swapchain image
@@ -138,7 +136,7 @@ void MRenderer::querySwapchainSupport() {
   pDebugger->print("Swapchain supported.");
 };
 
-void MRenderer::setExtent(uint32_t width, uint32_t height) {
+void MRenderer::setExtent(const uint32_t width, const uint32_t height) {
   pDebugger->print("Setting surface extent . . .");
 
   surfaceCapabilities.currentExtent.width = width;
@@ -174,8 +172,7 @@ void MRenderer::createImageViews() {
     if (vkCreateImageView(logicalDevice, &createInfo, nullptr,
                           &swapchainImageViews[i]) != VK_SUCCESS) {
       throw std::runtime_error(
-          "Failed to create swapchain image views!" +
-          errorCodeToString(ErrorCode::IMAGE_VIEWS_CREATION_FAILED));
+          "Failed to create swapchain image views!");
     };
   };
   pDebugger->print("Created swapchain image views.");
@@ -215,10 +212,7 @@ void MRenderer::createFramebuffers() {
 
     if (vkCreateFramebuffer(logicalDevice, &createInfo, nullptr,
                             &swapchainFramebuffers[i]) != VK_SUCCESS) {
-      throw std::runtime_error(
-          "Failed to create framebuffers: " +
-          errorCodeToString(ErrorCode::FRAMEBUFFER_CREATION_FAILED));
-    };
+      throw std::runtime_error("Failed to create framebuffers!");};
   };
 
   pDebugger->print("Created framebuffers.");
@@ -307,8 +301,7 @@ void MRenderer::selectSurfaceFormat() {
   };
 
   // Fallback
-  pDebugger->print("Preferred sRGB format not found. Falling back to first "
-                   "available format.",
+  pDebugger->print("Preferred sRGB format not found. Falling back to first available format.",
                    MESSAGE_TYPE::WARNING);
   surfaceFormat = surfaceFormats[0];
 };

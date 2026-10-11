@@ -29,9 +29,7 @@ void MLinuxHandler::initWindow() {
   // Display init &  it's error handling
   display = XOpenDisplay(nullptr);
   if (display == nullptr) {
-    errorCode = ErrorCode::OS_NOT_SUPPORTED;
-    throw std::runtime_error("Failed to open X11 display: " +
-                             errorCodeToString(errorCode));
+    throw std::runtime_error("Failed to open X11 display!");
     return;
   };
 
@@ -147,9 +145,7 @@ void MLinuxHandler::createSurface(VkInstance instance) {
 
   if (vkCreateXlibSurfaceKHR(instance, &createInfo, nullptr, &this->surface) !=
       VK_SUCCESS) {
-    errorCode = ErrorCode::SURFACE_CREATION_FAILED;
     throw std::runtime_error("Failed to create Vulkan X11 surface!");
   };
-
   pDebugger->print("Created Vulkan Xlib surface.");
 };
