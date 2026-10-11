@@ -10,7 +10,7 @@ MRenderer::MRenderer(MDebugger &debugger,
                      const VkDevice &logicalDevice, const VkSurfaceKHR &surface)
     : Surface(surface), physicalDevice(physicalDevice),
       logicalDevice(logicalDevice), pDebugger(&debugger) {
-  pDebugger->print("Initializing renderer . . .");
+  pDebugger->print("Constructed renderer .");
 };
 
 MRenderer::~MRenderer() {

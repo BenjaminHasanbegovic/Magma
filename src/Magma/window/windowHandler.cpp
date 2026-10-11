@@ -32,7 +32,7 @@ USER_OS MWindowHandler::userOS = UNSUPPORTED;
 std::unique_ptr<MWindowHandler>
 MWindowHandler::create(const std::string &appName, WINDOW_MODE windowMode,
                        const unsigned int windowSize[2], MDebugger &debugger) {
-  debugger.print("Initializing window handler . . .");
+  debugger.print("Constructed window handler.");
 
   // OS dependent logic
   switch (userOS) {

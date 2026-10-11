@@ -26,6 +26,7 @@ MVulkanContext::MVulkanContext(const std::string &appName,
   // Initialize class variables
   pAppName = appName.c_str();
   pDebugger = &debugger;
+  pDebugger->print("Constructed Vulkan context.");
 };
 
 MVulkanContext::~MVulkanContext() {

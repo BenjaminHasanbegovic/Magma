@@ -16,7 +16,7 @@ MInstance::MInstance(std::string appName, const unsigned int newWindowSize[2],
   pInitialWindowHandler =
       MWindowHandler::create(appName, windowMode, windowSize, *pDebugger);
 
-  pDebugger->print("Initializing magma instance.");
+  pDebugger->print("Constructed magma instance.");
 };
 
 MInstance::~MInstance() { destroy(); };
