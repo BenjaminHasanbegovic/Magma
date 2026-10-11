@@ -14,7 +14,7 @@ MInstance::MInstance(std::string appName, const unsigned int newWindowSize[2],
   pDebugger = new MDebugger(this->appName);
   pVulkanContext = new MVulkanContext(appName, *pDebugger);
   pInitialWindowHandler =
-      MWindowHandler::create(appName, windowMode, windowSize, *pDebugger);
+      MWindowHandler::create(this->appName, windowMode, windowSize, *pDebugger);
 
   pDebugger->print("Constructed magma instance.");
 };

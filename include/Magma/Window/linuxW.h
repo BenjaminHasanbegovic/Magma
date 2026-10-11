@@ -4,6 +4,7 @@
 #include "windowHandler.h"
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <cstring>
 
 namespace Magma {
 class MLinuxHandler : public MWindowHandler {

@@ -43,25 +43,42 @@ void MLinuxHandler::initWindow() {
       XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, size[0],
                           size[1], 0, backgroundColor, backgroundColor);
 
-  // Getting the windows properties
-  pDebugger->print("Setting window properties.");
   extractEvents();
-
   pDebugger->print("X11 Display initialized successfully.");
 };
 
 void MLinuxHandler::createWindow() {
   pDebugger->print("Creating Linux X11 window . . .");
 
-  XSetStandardProperties(display, window, pAppName, pAppName, None, nullptr, 0,
-                         nullptr);
+  XStoreName(display, window, windowTitle.c_str());
+  const Atom netWmName =
+      XInternAtom(display, "_NET_WM_NAME", False);
+
+  const Atom utf8String =
+      XInternAtom(display, "UTF8_STRING", False);
+
+  if (netWmName != None && utf8String != None) {
+    XChangeProperty(
+        display,
+        window,
+        netWmName,
+        utf8String,
+        8,
+        PropModeReplace,
+        reinterpret_cast<const unsigned char*>(
+            windowTitle.c_str()
+        ),
+        static_cast<int>(windowTitle.size())
+    );
+  }
+
+  XFlush(display);
   XMapWindow(display, window);
   XFlush(display);
-
   created = true;
 
   pDebugger->print("Created the Linux X11 window.");
-};
+}
 
 void MLinuxHandler::getFramebufferSize(uint32_t &width,
                                        uint32_t &height) const {

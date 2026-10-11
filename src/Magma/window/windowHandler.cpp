@@ -49,19 +49,23 @@ MWindowHandler::create(const std::string &appName, WINDOW_MODE windowMode,
 /*=============================================================================
   Class init and destruction
   =============================================================================*/
-MWindowHandler::MWindowHandler(const std::string &appName,
-                               const WINDOW_MODE windowMode,
-                               const unsigned int windowSize[2],
-                               MDebugger &debugger)
-    : mode(windowMode), pDebugger(&debugger) {
+MWindowHandler::MWindowHandler(
+    const std::string& appName,
+    const WINDOW_MODE windowMode,
+    const unsigned int windowSize[2],
+    MDebugger& debugger
+)
+    : mode(windowMode),
+      windowTitle(appName),
+      pDebugger(&debugger)
+{
   size[0] = windowSize[0];
   size[1] = windowSize[1];
-  pAppName = appName.c_str();
 };
 
 MWindowHandler::~MWindowHandler() {
   pDebugger->print("Destroying window handler.");
 
   pDebugger = nullptr;
-  pAppName = nullptr;
+  windowTitle = nullptr;
 };
