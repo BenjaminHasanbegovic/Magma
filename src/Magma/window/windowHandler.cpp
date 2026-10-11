@@ -67,5 +67,4 @@ MWindowHandler::~MWindowHandler() {
   pDebugger->print("Destroying window handler.");
 
   pDebugger = nullptr;
-  windowTitle = nullptr;
 };
