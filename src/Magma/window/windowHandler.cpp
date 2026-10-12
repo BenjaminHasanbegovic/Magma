@@ -55,7 +55,7 @@ MWindowHandler::MWindowHandler(
     const unsigned int windowSize[2],
     MDebugger& debugger
 )
-    : mode(windowMode),
+    : windowMode(windowMode),
       windowTitle(appName),
       pDebugger(&debugger)
 {

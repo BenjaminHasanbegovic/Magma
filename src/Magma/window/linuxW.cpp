@@ -77,11 +77,12 @@ void MLinuxHandler::createWindow() {
   XFlush(display);
   created = true;
 
+  setWindowMode(MWindowHandler::windowMode);
+
   pDebugger->print("Created the Linux X11 window.");
 }
 
-void MLinuxHandler::getFramebufferSize(uint32_t &width,
-                                       uint32_t &height) const {
+void MLinuxHandler::getFramebufferSize(uint32_t &width,uint32_t &height) const {
   XWindowAttributes windowAttributes;
   if (XGetWindowAttributes(display, window, &windowAttributes)) {
     width = static_cast<uint32_t>(windowAttributes.width);
@@ -91,6 +92,37 @@ void MLinuxHandler::getFramebufferSize(uint32_t &width,
     height = size[1];
   };
 };
+
+void MLinuxHandler::setWindowMode(WINDOW_MODE newWindowMode) {
+  MWindowHandler::windowMode = newWindowMode;
+
+  const Atom stateAtom = XInternAtom(display, "_NET_WM_STATE", False);
+  const Atom fullscreenAtom = XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", False);
+
+  event.type = ClientMessage;
+  event.xclient.window = window;
+  event.xclient.message_type = stateAtom;
+  event.xclient.format = 32;
+
+
+  if (MWindowHandler::windowMode == WINDOW_MODE::FULLSCREEN) {
+    pDebugger->print("Setting fullscreen window mode.");
+    event.xclient.data.l[0] = 1;
+  } else {
+    pDebugger->print("Setting windowed mode.");
+    event.xclient.data.l[0] = 0;
+  }
+
+  event.xclient.data.l[1] = fullscreenAtom;
+  event.xclient.data.l[2] = 0;
+  event.xclient.data.l[3] = 1;
+  event.xclient.data.l[4] = 0;
+
+  XSendEvent(display, DefaultRootWindow(display), False,
+             SubstructureNotifyMask | SubstructureRedirectMask, &event);
+
+  XFlush(display);
+}
 
 /*=============================================================================
   Event logic
@@ -118,21 +150,17 @@ void MLinuxHandler::extractEvents() {
 void MLinuxHandler::pollEvents(bool &runningState) {
   pDebugger->print("Polling events . . .");
 
-  // Essential event polling values
-  XEvent event;
   XNextEvent(display, &event);
 
   if (event.type == ClientMessage) {
     pDebugger->print("Client message received.");
-
     {
       // Quiting the app handle
       if (static_cast<Atom>(event.xclient.data.l[0]) == wmDeleteMessage) {
         pDebugger->print("Window close requested.");
         runningState = false;
-      };
-    }
-
+      }
+    };
   } else if (event.type == ConfigureNotify) {
     pDebugger->print("Configure notify received.");
     {
@@ -146,6 +174,8 @@ void MLinuxHandler::pollEvents(bool &runningState) {
         framebufferResized = true;
       };
     };
+  } else if (event.type == ButtonPress) {
+
   };
 };
 

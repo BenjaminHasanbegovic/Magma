@@ -21,7 +21,9 @@ public:
     =============================================================================*/
   void initWindow() override;
   void createWindow() override;
+  //Resizing logic
   void getFramebufferSize(uint32_t &width, uint32_t &height) const override;
+  void setWindowMode(WINDOW_MODE newWindowMode) override;
 
   /*=============================================================================
     Event logic
@@ -50,6 +52,7 @@ private:
   unsigned long int screen{0};
   Window window{};
   Atom wmDeleteMessage{0};
+  XEvent event;
 
   // Styling
   unsigned long backgroundColor{};

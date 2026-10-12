@@ -12,8 +12,8 @@ namespace Magma {
   Essential class values
   =============================================================================*/
 enum WINDOW_MODE : unsigned int {
-  BORDERLESS = 0,
-  FULL_SCREEN = 1,
+  WINDOWED = 0,
+  FULLSCREEN = 1,
   BORDERLESS_FULL_SCREEN = 2,
   OVERLAY = 3,
 };
@@ -52,6 +52,10 @@ public:
     =============================================================================*/
   virtual void initWindow() = 0;
   virtual void createWindow() = 0;
+  //Resizing logic
+  virtual void setWindowMode(WINDOW_MODE windowMode) = 0;
+  virtual void getFramebufferSize(uint32_t &width, uint32_t &height) const = 0;
+  bool framebufferResized{false};
 
   /*=============================================================================
     OS
@@ -60,12 +64,6 @@ public:
   static std::vector<const char *> getOSSpecificExtensions() {
     return OSSpecificExtensions;
   };
-
-  /*=============================================================================
-    Resizing logic
-    =============================================================================*/
-  virtual void getFramebufferSize(uint32_t &width, uint32_t &height) const = 0;
-  bool framebufferResized{false};
 
   /*=============================================================================
     Vulkan logic
@@ -83,7 +81,7 @@ protected:
   /*=============================================================================
     Window info
     =============================================================================*/
-  WINDOW_MODE mode;
+  WINDOW_MODE windowMode;
   unsigned int size[2]{}; // [0] width & [1] height
   bool created{false};
 
