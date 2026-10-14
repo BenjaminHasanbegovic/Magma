@@ -45,7 +45,9 @@ public:
   /*=============================================================================
     Queue families
     =============================================================================*/
-  void findMandatoryQueueFamilies() const;
+  void findMandatoryQueueFamilyIndexes() const;
+  [[nodiscard]] VkQueue getGraphicsQueue() const { return graphicsQueue; };
+  [[nodiscard]] VkQueue getPresentQueue() const { return presentQueue; };
 
   /*=============================================================================
     Getters
@@ -70,8 +72,8 @@ private:
   /*=============================================================================
     Vulkan instance
     =============================================================================*/
-  VkInstance instance = VK_NULL_HANDLE;
-  VkSurfaceKHR pSurface = VK_NULL_HANDLE;
+  VkInstance instance{VK_NULL_HANDLE};
+  VkSurfaceKHR pSurface{VK_NULL_HANDLE};
   void destroyInstance();
 
   /*=============================================================================
@@ -93,6 +95,8 @@ private:
   /*=============================================================================
     Queue families
     =============================================================================*/
+  VkQueue graphicsQueue{VK_NULL_HANDLE};
+  VkQueue presentQueue{VK_NULL_HANDLE};
   static std::optional<uint32_t> graphicsQueueFamilyIndex;
   static std::optional<uint32_t> presentQueueFamilyIndex;
 

@@ -41,20 +41,27 @@ void MInstance::start() {
     pVulkanContext->setSurface(pWindowHandler->getSurface());
 
     pVulkanContext->selectPhysicalDevice();
-    pVulkanContext->findMandatoryQueueFamilies();
+    pVulkanContext->findMandatoryQueueFamilyIndexes();
     pVulkanContext->createLogicalDevice();
 
-    pRenderer = new MRenderer(*pDebugger, pVulkanContext->getPhysicalDevice(),pVulkanContext->getLogicalDevice(),pWindowHandler->getSurface());
+    pRenderer = new MRenderer(*pDebugger, pVulkanContext->getPhysicalDevice(),
+      pVulkanContext->getLogicalDevice(),pWindowHandler->getSurface(),
+      pVulkanContext->getGraphicsQueue(),pVulkanContext->getPresentQueue());
+
     pRenderer->querySwapchainSupport();
     pRenderer->createSwapchain();
+    pRenderer->createImageViews();
 
-     pRenderer->createImageViews();
-     pRenderer->createFramebuffers();
+    pRenderer->createRenderPass();
+    pRenderer->createFramebuffers();
 
-     pRenderer->createCommandPool(MVulkanContext::getGraphicsQueueFamilyIndex());
-     pRenderer->createCommandBuffers();
-     pRenderer->createRenderPass();
-     pRenderer->createGraphicsPipeline();
+    pRenderer->createCommandPool(MVulkanContext::getGraphicsQueueFamilyIndex());
+
+    pRenderer->createCommandBuffers();
+    pRenderer->createGraphicsPipeline();
+    pRenderer->createSemaphores();
+
+    pRenderer->recordCommandBuffer();
 
     isRunning = true;
     pWindowHandler->changeCursorStyle(CURSOR_STYLE::POINTER);
@@ -116,9 +123,10 @@ void MInstance::startMainCallbackLoop() {
       uint32_t width, height;
       pWindowHandler->getFramebufferSize(width, height);
       pRenderer->setExtent(width, height);
-
+      pRenderer->recordCommandBuffer();
       pWindowHandler->framebufferResized = false;
     };
+    pRenderer->drawFrame();
   };
   pDebugger->print("Main loop ended.");
 };

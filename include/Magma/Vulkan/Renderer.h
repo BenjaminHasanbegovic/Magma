@@ -13,8 +13,15 @@ public:
     Class init and destruction
     =============================================================================*/
   MRenderer(MDebugger &debugger, const VkPhysicalDevice &physicalDevice,
-            const VkDevice &logicalDevice, const VkSurfaceKHR &surface);
+            const VkDevice &logicalDevice, const VkSurfaceKHR &surface,
+            VkQueue graphicsQueue,VkQueue presentQueue);
   ~MRenderer();
+
+
+  /*=============================================================================
+    Rendering
+    =============================================================================*/
+  void drawFrame() const;
 
   /*=============================================================================
     Swapchain
@@ -44,7 +51,22 @@ public:
     =============================================================================*/
   void createCommandPool(uint32_t graphicsQueueFamilyIndex);
   void destroyCommandPool() const;
+
+  /*=============================================================================
+    Command buffer
+    =============================================================================*/
   void createCommandBuffers();
+  void recordCommandBuffer() const;
+
+  /*=============================================================================
+    Semaphores
+    =============================================================================*/
+  void createSemaphores();
+  void destroySemaphores() const;
+
+  /*=============================================================================
+    Render pass
+    =============================================================================*/
   void createRenderPass();
   void destroyRenderPass() const;
 
@@ -53,7 +75,11 @@ public:
     =============================================================================*/
   void createGraphicsPipeline();
   void destroyGraphicsPipeline() const;
-  std::vector<char> readShaderFile(const std::string &fileName) const;
+
+  /*=============================================================================
+    Shaders
+    =============================================================================*/
+  [[nodiscard]] std::vector<char> readShaderFile(const std::string &fileName) const;
   void createShaderModule(const std::vector<char> &code,VkShaderModule &shaderModule) const;
 private:
   /*=============================================================================
@@ -72,8 +98,8 @@ private:
   VkSurfaceKHR Surface{VK_NULL_HANDLE};
   VkSurfaceFormatKHR surfaceFormat{};
   std::vector<VkSurfaceFormatKHR> surfaceFormats;
-  VkPresentModeKHR surfacePresentMode;
-  std::vector<VkPresentModeKHR> surfacePresentModes;
+  VkPresentModeKHR surfacePresentMode{};
+  std::vector<VkPresentModeKHR> surfacePresentModes{};
   VkSurfaceCapabilitiesKHR surfaceCapabilities{};
   VkExtent2D extent{.width = 1, .height = 1};
 
@@ -85,10 +111,18 @@ private:
   VkRenderPass renderPass{VK_NULL_HANDLE};
 
   /*=============================================================================
-    Vulkan info
+    Semaphores
+    =============================================================================*/
+  VkSemaphore semaphoreImageAvailable{VK_NULL_HANDLE};
+  VkSemaphore semaphoreRendererFinished{VK_NULL_HANDLE};
+
+  /*=============================================================================
+    Vulkan context
     =============================================================================*/
   VkPhysicalDevice physicalDevice{VK_NULL_HANDLE};
   VkDevice logicalDevice{VK_NULL_HANDLE};
+  VkQueue graphicsQueue{VK_NULL_HANDLE};
+  VkQueue presentQueue{VK_NULL_HANDLE};
 
   /*=============================================================================
     Graphics pipeline

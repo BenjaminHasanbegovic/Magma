@@ -141,6 +141,9 @@ void MVulkanContext::createLogicalDevice() {
   } else {
     throw std::runtime_error("Failed to crate logical device!");
   };
+
+  vkGetDeviceQueue(logicalDevice, graphicsQueueFamilyIndex.value(), 0, &graphicsQueue);
+  vkGetDeviceQueue(logicalDevice, presentQueueFamilyIndex.value(), 0, &presentQueue);
 };
 
 void MVulkanContext::destroyLogicalDevice() {
@@ -315,13 +318,14 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(
 /*=============================================================================
   Queue families
   =============================================================================*/
-void MVulkanContext::findMandatoryQueueFamilies() const {
-  pDebugger->print("Finding the queue families . . .");
+void MVulkanContext::findMandatoryQueueFamilyIndexes() const {
+  pDebugger->print("Finding the queue family indexes . . .");
 
   uint32_t queueFamilyCount{0};
+
   vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount,
                                            nullptr);
-  std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
+std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
   vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount,
                                            queueFamilyProperties.data());
 
@@ -329,6 +333,7 @@ void MVulkanContext::findMandatoryQueueFamilies() const {
     // Check for graphics queue
     if (queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
       graphicsQueueFamilyIndex = i;
+
       pDebugger->print(
           "Found the graphics queue family,index: " + std::to_string(i) + ".");
     };

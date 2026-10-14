@@ -7,15 +7,18 @@ using namespace Magma;
   =============================================================================*/
 MRenderer::MRenderer(MDebugger &debugger,
                      const VkPhysicalDevice &physicalDevice,
-                     const VkDevice &logicalDevice, const VkSurfaceKHR &surface)
+                     const VkDevice &logicalDevice, const VkSurfaceKHR &surface,
+                     VkQueue graphicsQueue, VkQueue presentQueue)
     : Surface(surface), physicalDevice(physicalDevice),
-      logicalDevice(logicalDevice), pDebugger(&debugger) {
+      logicalDevice(logicalDevice), graphicsQueue(graphicsQueue),
+      presentQueue(presentQueue), pDebugger(&debugger) {
   pDebugger->print("Constructed renderer .");
 };
 
 MRenderer::~MRenderer() {
   pDebugger->print("Destroying renderer . . .");
 
+  destroySemaphores();
   destroyGraphicsPipeline();
   destroyCommandPool();
   destroyFramebuffers();
@@ -23,8 +26,53 @@ MRenderer::~MRenderer() {
   destroyImageViews();
   destroySwapchain();
 
-  Swapchain = nullptr;
   pDebugger = nullptr;
+};
+
+ /*=============================================================================
+   Rendering
+   =============================================================================*/
+void MRenderer::drawFrame() const {
+  pDebugger->print("Drawing frame.");
+
+  uint32_t imageIndex{0};
+  vkAcquireNextImageKHR(logicalDevice, Swapchain,UINT64_MAX,semaphoreImageAvailable,VK_NULL_HANDLE, &imageIndex);
+
+  VkSubmitInfo submitInfo = {};
+  const VkSemaphore waitSemaphores[] = { semaphoreImageAvailable };
+  const VkSemaphore signalSemaphores[] = { semaphoreRendererFinished };
+  VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = waitSemaphores;
+  submitInfo.pWaitDstStageMask = waitStages;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = signalSemaphores;
+
+  //Error handling
+  if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) throw std::runtime_error("Failed to submit the queue!");
+
+  VkPresentInfoKHR presentInfo{};
+
+  const VkSwapchainKHR swapchains[] = {Swapchain};
+
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = signalSemaphores;
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = swapchains;
+  presentInfo.pImageIndices = &imageIndex;
+  presentInfo.pResults = nullptr;
+
+  VkResult presentResult = vkQueuePresentKHR(presentQueue, &presentInfo);
+
+  if (presentResult != VK_SUCCESS &&
+      presentResult != VK_SUBOPTIMAL_KHR) {
+    throw std::runtime_error("Failed to present swapchain image!");
+      }
+
 };
 
 /*=============================================================================
@@ -34,7 +82,7 @@ void MRenderer::createSwapchain() {
 pDebugger->print("Creating swapchain . . .");
 
   selectSurfaceFormat();
-selectPresentMode();
+  selectPresentMode();
 
   swapchainImageCount = surfaceCapabilities.minImageCount + 1;
   if (surfaceCapabilities.maxImageCount > 0 &&
@@ -228,6 +276,9 @@ void MRenderer::destroyFramebuffers() const {
   };
 };
 
+/*=============================================================================
+  Render pass
+  =============================================================================*/
 void MRenderer::createRenderPass() {
   pDebugger->print("Creating render pass . . .");
 
@@ -359,6 +410,9 @@ void MRenderer::destroyCommandPool() const {
   pDebugger->print("Destroyed command pool.");
 };
 
+/*=============================================================================
+  Command buffer
+  =============================================================================*/
 void MRenderer::createCommandBuffers() {
   pDebugger->print("Creating command buffers . . .");
 
@@ -376,6 +430,72 @@ void MRenderer::createCommandBuffers() {
   };
 
   pDebugger->print("Created command buffers .");
+};
+
+void MRenderer::recordCommandBuffer() const {
+  pDebugger->print("Recording command buffer . . .");
+
+  for (size_t i = 0; i < commandBuffers.size(); i++) {
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+    beginInfo.pInheritanceInfo = nullptr;
+
+    //Error handling
+   if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) throw std::runtime_error("Failed to begin recording command buffer!") ;
+
+    //Render pass
+    {
+      pDebugger->print("Creating the render pass for the buffer . . .");
+      VkRenderPassBeginInfo renderPassInfo{};
+      renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+      renderPassInfo.renderPass = renderPass;
+      renderPassInfo.framebuffer = swapchainFramebuffers[i];
+
+      renderPassInfo.renderArea.offset = { 0, 0 };
+      renderPassInfo.renderArea.extent = extent;
+
+      VkClearValue clearColor{0.0f, 0.0f, 0.0f, 1.0f};
+      renderPassInfo.clearValueCount = 1;
+      renderPassInfo.pClearValues = &clearColor;
+
+      vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo,VK_SUBPASS_CONTENTS_INLINE);
+
+      vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,graphicsPipeline);
+
+      vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+
+      vkCmdEndRenderPass(commandBuffers[i]);
+    };
+
+    //Error handling
+    if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) throw std::runtime_error("Failed to begin recording command buffer!") ;
+  };
+};
+
+/*=============================================================================
+  Semaphores
+  =============================================================================*/
+void MRenderer::createSemaphores() {
+  pDebugger->print("Creating semaphores . . .");
+
+  VkSemaphoreCreateInfo createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+  //Error handling
+  if (vkCreateSemaphore(logicalDevice, &createInfo, nullptr,&semaphoreImageAvailable) != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create semaphore for checking image availability!") ;
+  };
+  if (vkCreateSemaphore(logicalDevice, &createInfo, nullptr,&semaphoreRendererFinished) != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create semaphore for checking if the renderer is finished!") ;
+  }
+};
+
+void MRenderer::destroySemaphores() const {
+  pDebugger->print("Destroying semaphores . . .");
+
+  vkDestroySemaphore(logicalDevice, semaphoreImageAvailable, nullptr);
+  vkDestroySemaphore(logicalDevice, semaphoreRendererFinished, nullptr);
 };
 
 /*=============================================================================
@@ -531,7 +651,7 @@ void MRenderer::createGraphicsPipeline() {
     if (vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) != VK_SUCCESS) throw std::runtime_error("Failed to create pipeline layout!");
     };
 
-  pDebugger->print("Setting pipeline createion info.");
+  pDebugger->print("Setting pipeline creation info.");
 VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
   pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
   pipelineCreateInfo.stageCount = 2;
@@ -566,6 +686,9 @@ void MRenderer::destroyGraphicsPipeline() const {
   vkDestroyPipeline(logicalDevice,graphicsPipeline,nullptr);
 };
 
+/*=============================================================================
+  Shaders
+  =============================================================================*/
 std::vector<char> MRenderer::readShaderFile(const std::string &fileName) const {
   pDebugger->print("Attempting to read the shader file from: " + fileName + ".");
 
