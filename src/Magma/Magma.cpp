@@ -35,6 +35,7 @@ void MInstance::start() {
     pWindowHandler = pInitialWindowHandler.release(); // Set the window handler to OS specific
     pWindowHandler->initWindow();
     pWindowHandler->createWindow();
+    pWindowHandler->changeCursorStyle(CURSOR_STYLE::LOADING);
 
     pWindowHandler->createSurface(pVulkanContext->getInstance());
     pVulkanContext->setSurface(pWindowHandler->getSurface());
@@ -53,8 +54,10 @@ void MInstance::start() {
      pRenderer->createCommandPool(MVulkanContext::getGraphicsQueueFamilyIndex());
      pRenderer->createCommandBuffers();
      pRenderer->createRenderPass();
+     pRenderer->createGraphicsPipeline();
 
     isRunning = true;
+    pWindowHandler->changeCursorStyle(CURSOR_STYLE::POINTER);
     pDebugger->print("Created magma instance.");
     stopPerformanceTestTimer();
     startMainCallbackLoop();

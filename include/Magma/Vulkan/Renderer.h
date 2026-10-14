@@ -3,6 +3,8 @@
 #include "../Utils/Debugger.h"
 #include <vector>
 #include <vulkan/vulkan.h>
+#include <filesystem>
+#include <fstream>
 
 namespace Magma {
 class MRenderer {
@@ -46,6 +48,13 @@ public:
   void createRenderPass();
   void destroyRenderPass() const;
 
+  /*=============================================================================
+    Graphics pipeline
+    =============================================================================*/
+  void createGraphicsPipeline();
+  void destroyGraphicsPipeline() const;
+  std::vector<char> readShaderFile(const std::string &fileName) const;
+  void createShaderModule(const std::vector<char> &code,VkShaderModule &shaderModule) const;
 private:
   /*=============================================================================
      Swapchain
@@ -80,6 +89,12 @@ private:
     =============================================================================*/
   VkPhysicalDevice physicalDevice{VK_NULL_HANDLE};
   VkDevice logicalDevice{VK_NULL_HANDLE};
+
+  /*=============================================================================
+    Graphics pipeline
+    =============================================================================*/
+  VkPipeline graphicsPipeline{VK_NULL_HANDLE};
+  VkPipelineLayout pipelineLayout{VK_NULL_HANDLE};
 
   /*=============================================================================
     Debugging

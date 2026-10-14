@@ -124,6 +124,37 @@ void MLinuxHandler::setWindowMode(WINDOW_MODE newWindowMode) {
   XFlush(display);
 }
 
+void MLinuxHandler::changeCursorStyle(const CURSOR_STYLE newCursorStyle) {
+  pDebugger->print("Changing cursor style . . .");
+  Cursor cursorStyle = 0;
+
+  switch (newCursorStyle) {
+  case CURSOR_STYLE::POINTER:
+    cursorStyle = XCreateFontCursor(display, XC_left_ptr);
+    pDebugger->print("Changed cursor style to POINTER.");
+    break;
+
+  case CURSOR_STYLE::LOADING:
+    cursorStyle = XCreateFontCursor(display, XC_watch);
+    pDebugger->print("Changed cursor style to LOADING.");
+    break;
+
+  case CURSOR_STYLE::PRESS:
+    cursorStyle = XCreateFontCursor(display, XC_hand1);
+    pDebugger->print("Changed cursor style to PRESS.");
+    break;
+
+  case CURSOR_STYLE::TYPE:
+    cursorStyle = XCreateFontCursor(display, XC_xterm);
+    pDebugger->print("Changed cursor style to TYPE (Text I-beam).");
+    break;
+  }
+
+  if (cursorStyle) {
+    XDefineCursor(display, window, cursorStyle);
+    XFlush(display);
+  };
+};
 /*=============================================================================
   Event logic
   =============================================================================*/

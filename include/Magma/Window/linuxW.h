@@ -3,6 +3,7 @@
 #define VK_USE_PLATFORM_XLIB_KHR
 #include "windowHandler.h"
 #include <X11/Xlib.h>
+#include <X11/cursorfont.h>
 #include <X11/Xutil.h>
 #include <cstring>
 
@@ -24,7 +25,8 @@ public:
   //Resizing logic
   void getFramebufferSize(uint32_t &width, uint32_t &height) const override;
   void setWindowMode(WINDOW_MODE newWindowMode) override;
-
+ //Cursor logic
+  void changeCursorStyle(CURSOR_STYLE newCursorStyle) override;
   /*=============================================================================
     Event logic
     =============================================================================*/

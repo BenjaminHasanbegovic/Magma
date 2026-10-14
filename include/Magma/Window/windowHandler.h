@@ -26,6 +26,13 @@ enum USER_OS : unsigned int {
   MAC = 4,
 };
 
+enum CURSOR_STYLE : unsigned int {
+  POINTER = 0,
+  LOADING = 1,
+  PRESS = 2,
+  TYPE = 3,
+};
+
 /*=============================================================================
   Main class
   =============================================================================*/
@@ -56,6 +63,8 @@ public:
   virtual void setWindowMode(WINDOW_MODE windowMode) = 0;
   virtual void getFramebufferSize(uint32_t &width, uint32_t &height) const = 0;
   bool framebufferResized{false};
+//Cursor logic
+  virtual void changeCursorStyle(CURSOR_STYLE style) = 0;
 
   /*=============================================================================
     OS
