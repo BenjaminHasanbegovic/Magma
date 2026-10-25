@@ -36,7 +36,7 @@ MRenderer::~MRenderer() {
    =============================================================================*/
 
 void MRenderer::acquireNextImage() {
-  vkAcquireNextImageKHR(logicalDevice, Swapchain,UINT64_MAX,semaphoreImageAvailable,VK_NULL_HANDLE, &imageIndex);
+  vkAcquireNextImageKHR(logicalDevice, Swapchain,UINT64_MAX,semaphoreImageAvailable,syncHostWithDeviceFence, &imageIndex);
 };
 
 void MRenderer::drawFrame() const {
