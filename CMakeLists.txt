@@ -17,7 +17,8 @@ option(ENABLE_DEBUG "Enable custom debug mode" ON)
 add_executable(Magma
         main.cpp
         ${SOURCES}
-        ${HEADERS})
+        ${HEADERS}
+     )
 
 target_include_directories(Magma PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

@@ -82,17 +82,6 @@ void MLinuxHandler::createWindow() {
   pDebugger->print("Created the Linux X11 window.");
 }
 
-void MLinuxHandler::getFramebufferSize(uint32_t &width,uint32_t &height) const {
-  XWindowAttributes windowAttributes;
-  if (XGetWindowAttributes(display, window, &windowAttributes)) {
-    width = static_cast<uint32_t>(windowAttributes.width);
-    height = static_cast<uint32_t>(windowAttributes.height);
-  } else {
-    width = size[0];
-    height = size[1];
-  };
-};
-
 void MLinuxHandler::setWindowMode(WINDOW_MODE newWindowMode) {
   MWindowHandler::windowMode = newWindowMode;
 
@@ -179,11 +168,18 @@ void MLinuxHandler::extractEvents() {
 };
 
 void MLinuxHandler::pollEvents(bool &runningState) {
-  pDebugger->print("Polling events . . .");
-
   XNextEvent(display, &event);
+  if (event.type == ConfigureNotify) {
+    pDebugger->print("Configure notify received.");
+    {
 
-  if (event.type == ClientMessage) {
+      if (event.xconfigure.width != size[0] || event.xconfigure.height != size[1]) {
+        size[0] = event.xconfigure.width;
+        size[1] = event.xconfigure.height;
+        resized = true;
+      };
+    };
+  }else if (event.type == ClientMessage) {
     pDebugger->print("Client message received.");
     {
       // Quiting the app handle
@@ -192,20 +188,8 @@ void MLinuxHandler::pollEvents(bool &runningState) {
         runningState = false;
       }
     };
-  } else if (event.type == ConfigureNotify) {
-    pDebugger->print("Configure notify received.");
-    {
-      // Resize handle
-      const auto newWidth = static_cast<uint32_t>(event.xconfigure.width);
-      const auto newHeight = static_cast<uint32_t>(event.xconfigure.height);
-
-      if (newWidth != size[0] || newHeight != size[1]) {
-        size[0] = newWidth;
-        size[1] = newHeight;
-        framebufferResized = true;
-      };
-    };
-  } else if (event.type == ButtonPress) {
+  }
+  else if (event.type == ButtonPress) {
 
   };
 };

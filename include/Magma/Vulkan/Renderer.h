@@ -21,7 +21,15 @@ public:
   /*=============================================================================
     Rendering
     =============================================================================*/
+ [[nodiscard]] bool canRenderFrame() const {return updateFrames;};
+  void acquireNextImage();
   void drawFrame() const;
+  void presentFrame() const;
+  //Fence logic
+  void createFence();
+  void destroyFence() const;
+  void waitForFence() const;
+  void resetFence();
 
   /*=============================================================================
     Swapchain
@@ -30,6 +38,7 @@ public:
   void destroySwapchain() const;
   void querySwapchainSupport();
   void setExtent(uint32_t width, uint32_t height);
+  void recreateSwapchain();
   // Images
   void createImageViews();
   void destroyImageViews();
@@ -81,7 +90,15 @@ public:
     =============================================================================*/
   [[nodiscard]] std::vector<char> readShaderFile(const std::string &fileName) const;
   void createShaderModule(const std::vector<char> &code,VkShaderModule &shaderModule) const;
+  void destroyShaderModule() const;
 private:
+  /*=============================================================================
+    Rendering
+    =============================================================================*/
+ uint32_t imageIndex{1};
+  bool updateFrames{true};
+  VkFence syncHostWithDeviceFence{VK_NULL_HANDLE};
+
   /*=============================================================================
      Swapchain
     =============================================================================*/
@@ -96,9 +113,9 @@ private:
     Surface
     =============================================================================*/
   VkSurfaceKHR Surface{VK_NULL_HANDLE};
-  VkSurfaceFormatKHR surfaceFormat{};
+  std::optional<VkSurfaceFormatKHR> surfaceFormat{};
   std::vector<VkSurfaceFormatKHR> surfaceFormats;
-  VkPresentModeKHR surfacePresentMode{};
+  std::optional<VkPresentModeKHR> surfacePresentMode{};
   std::vector<VkPresentModeKHR> surfacePresentModes{};
   VkSurfaceCapabilitiesKHR surfaceCapabilities{};
   VkExtent2D extent{.width = 1, .height = 1};
@@ -129,6 +146,15 @@ private:
     =============================================================================*/
   VkPipeline graphicsPipeline{VK_NULL_HANDLE};
   VkPipelineLayout pipelineLayout{VK_NULL_HANDLE};
+
+  /*=============================================================================
+    Shaders
+    =============================================================================*/
+  VkShaderModule vertShaderModule{VK_NULL_HANDLE};
+  VkShaderModule fragShaderModule{VK_NULL_HANDLE};
+  VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+  VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+
 
   /*=============================================================================
     Debugging

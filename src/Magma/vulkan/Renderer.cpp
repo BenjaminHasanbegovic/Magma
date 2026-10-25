@@ -18,6 +18,7 @@ MRenderer::MRenderer(MDebugger &debugger,
 MRenderer::~MRenderer() {
   pDebugger->print("Destroying renderer . . .");
 
+  destroyFence();
   destroySemaphores();
   destroyGraphicsPipeline();
   destroyCommandPool();
@@ -25,6 +26,7 @@ MRenderer::~MRenderer() {
   destroyRenderPass();
   destroyImageViews();
   destroySwapchain();
+  destroyShaderModule();
 
   pDebugger = nullptr;
 };
@@ -32,16 +34,18 @@ MRenderer::~MRenderer() {
  /*=============================================================================
    Rendering
    =============================================================================*/
-void MRenderer::drawFrame() const {
-  pDebugger->print("Drawing frame.");
 
-  uint32_t imageIndex{0};
+void MRenderer::acquireNextImage() {
   vkAcquireNextImageKHR(logicalDevice, Swapchain,UINT64_MAX,semaphoreImageAvailable,VK_NULL_HANDLE, &imageIndex);
+};
+
+void MRenderer::drawFrame() const {
 
   VkSubmitInfo submitInfo = {};
   const VkSemaphore waitSemaphores[] = { semaphoreImageAvailable };
   const VkSemaphore signalSemaphores[] = { semaphoreRendererFinished };
-  VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  constexpr VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.waitSemaphoreCount = 1;
   submitInfo.pWaitSemaphores = waitSemaphores;
@@ -52,10 +56,13 @@ void MRenderer::drawFrame() const {
   submitInfo.pSignalSemaphores = signalSemaphores;
 
   //Error handling
-  if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) throw std::runtime_error("Failed to submit the queue!");
+  if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, syncHostWithDeviceFence) != VK_SUCCESS) throw std::runtime_error("Failed to submit the queue!");
 
+};
+
+void MRenderer::presentFrame() const {
+  const VkSemaphore signalSemaphores[] = { semaphoreRendererFinished };
   VkPresentInfoKHR presentInfo{};
-
   const VkSwapchainKHR swapchains[] = {Swapchain};
 
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -66,13 +73,42 @@ void MRenderer::drawFrame() const {
   presentInfo.pImageIndices = &imageIndex;
   presentInfo.pResults = nullptr;
 
-  VkResult presentResult = vkQueuePresentKHR(presentQueue, &presentInfo);
-
-  if (presentResult != VK_SUCCESS &&
+  // Error handling
+  if (const VkResult presentResult = vkQueuePresentKHR(presentQueue, &presentInfo);
+      presentResult != VK_SUCCESS &&
       presentResult != VK_SUBOPTIMAL_KHR) {
     throw std::runtime_error("Failed to present swapchain image!");
       }
+};
 
+void MRenderer::createFence() {
+  pDebugger->print("Creating fence . . .");
+
+VkFenceCreateInfo createInfo{};
+
+  createInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  createInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+  //Error handling
+  if (vkCreateFence(logicalDevice, &createInfo, nullptr, &syncHostWithDeviceFence) != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create Vulkan Fence!");
+  };
+};
+
+void MRenderer::destroyFence() const {
+  pDebugger->print("Destroying fence . . .");
+
+  vkDestroyFence(logicalDevice, syncHostWithDeviceFence, nullptr);
+};
+
+
+void MRenderer::waitForFence() const {
+  if (vkWaitForFences(logicalDevice, 1, &syncHostWithDeviceFence, VK_TRUE, UINT64_MAX) != VK_SUCCESS)
+    throw std::runtime_error("Failed to wait for fence!");
+};
+
+void MRenderer::resetFence() {
+  if (vkResetFences(logicalDevice, 1, &syncHostWithDeviceFence) != VK_SUCCESS) throw std::runtime_error("Failed to reset fence!");
 };
 
 /*=============================================================================
@@ -81,8 +117,9 @@ void MRenderer::drawFrame() const {
 void MRenderer::createSwapchain() {
 pDebugger->print("Creating swapchain . . .");
 
-  selectSurfaceFormat();
-  selectPresentMode();
+  if (!surfaceFormat.has_value()) selectSurfaceFormat();
+
+  if (!surfacePresentMode.has_value()) selectPresentMode();
 
   swapchainImageCount = surfaceCapabilities.minImageCount + 1;
   if (surfaceCapabilities.maxImageCount > 0 &&
@@ -94,17 +131,16 @@ pDebugger->print("Creating swapchain . . .");
   createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
   createInfo.surface = Surface;
   createInfo.minImageCount = swapchainImageCount;
-  createInfo.imageFormat = surfaceFormat.format;
-  createInfo.imageColorSpace =  surfaceFormat.colorSpace;
+  createInfo.imageFormat = surfaceFormat.value().format;
+  createInfo.imageColorSpace =  surfaceFormat.value().colorSpace;
   createInfo.imageArrayLayers = 1;
   createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
   createInfo.preTransform = surfaceCapabilities.currentTransform;
   createInfo.imageExtent = surfaceCapabilities.currentExtent;
   createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  createInfo.presentMode = surfacePresentMode;
+  createInfo.presentMode = surfacePresentMode.value();
   createInfo.compositeAlpha =
-      VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; // Reminder: Move to window handler
-  // logic
+      VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; // Reminder: Move to window handler logic
   createInfo.clipped = VK_TRUE;
   createInfo.oldSwapchain = VK_NULL_HANDLE;
 
@@ -128,6 +164,35 @@ void MRenderer::destroySwapchain() const {
   pDebugger->print("Destroying swapchain.");
 
   vkDestroySwapchainKHR(logicalDevice, Swapchain, nullptr);
+};
+
+void MRenderer::recreateSwapchain() {
+  pDebugger->print("Recreating swapchain.");
+
+  if (logicalDevice) {
+    vkDeviceWaitIdle(logicalDevice);
+  };
+
+  if (Swapchain == VK_NULL_HANDLE) {
+    pDebugger->print("Unable to recreate swapchain, it wasn't created!",MESSAGE_TYPE::WARNING);
+    return;
+  };
+
+  destroyFramebuffers();
+
+  destroyGraphicsPipeline();
+  destroyRenderPass();
+
+  destroyImageViews();
+
+  createSwapchain();
+  createImageViews();
+
+  createRenderPass();
+  createGraphicsPipeline();
+
+  createFramebuffers();
+  createCommandBuffers();
 };
 
 void MRenderer::querySwapchainSupport() {
@@ -205,7 +270,7 @@ void MRenderer::createImageViews() {
     createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     createInfo.image = swapchainImages[i];
     createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    createInfo.format = surfaceFormat.format;
+    createInfo.format = surfaceFormat.value().format;
 
     createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
     createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -285,7 +350,7 @@ void MRenderer::createRenderPass() {
   // Color attachments
   pDebugger->print("Setting the color attachment to the render pass . . .");
   VkAttachmentDescription colorAttachment{};
-  colorAttachment.format = surfaceFormat.format;
+  colorAttachment.format = surfaceFormat.value().format;
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -504,13 +569,9 @@ void MRenderer::destroySemaphores() const {
 void MRenderer::createGraphicsPipeline() {
   pDebugger->print("Creating graphics pipeline . . .");
 
-  VkShaderModule vertShaderModule{VK_NULL_HANDLE};
-  VkShaderModule fragShaderModule{VK_NULL_HANDLE};
-  VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-  VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-
-  {
+  if (vertShaderModule == VK_NULL_HANDLE || fragShaderModule == VK_NULL_HANDLE) {
     pDebugger->print("Setting fragment & vertex shader info.");
+
     const auto vertShaderCode = readShaderFile("../include/Magma/Shaders/vert.spv");
     const auto fragShaderCode = readShaderFile("../include/Magma/Shaders/frag.spv");
 
@@ -673,11 +734,6 @@ VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
   if (vkCreateGraphicsPipelines(logicalDevice,VK_NULL_HANDLE,1,&pipelineCreateInfo,nullptr,&graphicsPipeline) != VK_SUCCESS) throw std::runtime_error("Failed to create graphics pipeline!");
 
   pDebugger->print("Created graphics pipeline.");
-  //Cleanup
-  vkDestroyShaderModule(logicalDevice,vertShaderModule,nullptr);
-  vkDestroyShaderModule(logicalDevice,fragShaderModule,nullptr);
-
-  pDebugger->print("Destroyed shader modules.");
 };
 
 void MRenderer::destroyGraphicsPipeline() const {
@@ -720,4 +776,11 @@ void MRenderer::createShaderModule(const std::vector<char> &code,VkShaderModule 
   if (vkCreateShaderModule(logicalDevice, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) throw std::runtime_error("Failed to create shader module!");
 
   pDebugger->print("Created shader module.");
+};
+
+void MRenderer::destroyShaderModule() const {
+  vkDestroyShaderModule(logicalDevice,vertShaderModule,nullptr);
+  vkDestroyShaderModule(logicalDevice,fragShaderModule,nullptr);
+
+  pDebugger->print("Destroyed shader modules.");
 };

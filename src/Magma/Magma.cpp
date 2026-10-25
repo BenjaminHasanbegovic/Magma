@@ -49,6 +49,7 @@ void MInstance::start() {
       pVulkanContext->getGraphicsQueue(),pVulkanContext->getPresentQueue());
 
     pRenderer->querySwapchainSupport();
+    pRenderer->setExtent(pWindowHandler->getWidth(),pWindowHandler->getHeight());
     pRenderer->createSwapchain();
     pRenderer->createImageViews();
 
@@ -60,7 +61,7 @@ void MInstance::start() {
     pRenderer->createCommandBuffers();
     pRenderer->createGraphicsPipeline();
     pRenderer->createSemaphores();
-
+    pRenderer->createFence();
     pRenderer->recordCommandBuffer();
 
     isRunning = true;
@@ -117,35 +118,55 @@ void MInstance::destroy() {
 
 void MInstance::startMainCallbackLoop() {
   pDebugger->print("Starting main loop . . .");
+
+  pRenderer->acquireNextImage();
+
   while (isRunning) {
+
     pWindowHandler->pollEvents(isRunning);
-    if (pWindowHandler->framebufferResized) {
-      uint32_t width, height;
-      pWindowHandler->getFramebufferSize(width, height);
-      pRenderer->setExtent(width, height);
+pRenderer->waitForFence();
+
+    if (pWindowHandler->resized) {
+      pRenderer->setExtent(pWindowHandler->getWidth(), pWindowHandler->getHeight());
+      pRenderer->recreateSwapchain();
       pRenderer->recordCommandBuffer();
-      pWindowHandler->framebufferResized = false;
+      pRenderer->acquireNextImage();
+      if (windowSize[0] == 0 || windowSize[1] == 0) {
+        continue;
+      }else {
+        pWindowHandler->resized = false;
+      };
     };
-    pRenderer->drawFrame();
+
+    pRenderer->resetFence();
+
+    if (pRenderer->canRenderFrame()) {
+      pRenderer->drawFrame();
+      pRenderer->presentFrame();
+      pRenderer->acquireNextImage();
+    };
+
   };
+
   pDebugger->print("Main loop ended.");
+
 };
 
 /*=============================================================================
   Debugging
   =============================================================================*/
 void MInstance::startPerformanceTestTimer() {
-  if (!DEBUG_MODE  && !performanceTestTimerStarted) return;
+  if constexpr (!DEBUG_MODE  && !performanceTestTimerStarted) return;
   performanceTestTimestamp = std::chrono::steady_clock::now();
   pDebugger->print("Started performance timer.");
 }
 
-void MInstance::stopPerformanceTestTimer() {
-  if (!DEBUG_MODE) return;
-  auto endTime = std::chrono::steady_clock::now();
+void MInstance::stopPerformanceTestTimer() const {
+  if constexpr (!DEBUG_MODE) return;
+  const auto endTime = std::chrono::steady_clock::now();
 
   // Calculate elapsed time in milliseconds
-  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+  const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
       endTime - performanceTestTimestamp
   ).count();
 

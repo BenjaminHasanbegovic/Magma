@@ -33,7 +33,7 @@ private:
   std::chrono::time_point<std::chrono::steady_clock> performanceTestTimestamp{};
   bool performanceTestTimerStarted{false};
   void startPerformanceTestTimer();
-  void stopPerformanceTestTimer();
+  void stopPerformanceTestTimer() const;
 
 
   /*=============================================================================

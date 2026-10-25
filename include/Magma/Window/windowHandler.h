@@ -61,8 +61,9 @@ public:
   virtual void createWindow() = 0;
   //Resizing logic
   virtual void setWindowMode(WINDOW_MODE windowMode) = 0;
-  virtual void getFramebufferSize(uint32_t &width, uint32_t &height) const = 0;
-  bool framebufferResized{false};
+  bool resized{false};
+  [[nodiscard]] unsigned int getWidth() const { return size[0]; };
+  [[nodiscard]] unsigned int getHeight() const { return size[1]; };
 //Cursor logic
   virtual void changeCursorStyle(CURSOR_STYLE style) = 0;
 

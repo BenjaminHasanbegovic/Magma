@@ -23,7 +23,6 @@ public:
   void initWindow() override;
   void createWindow() override;
   //Resizing logic
-  void getFramebufferSize(uint32_t &width, uint32_t &height) const override;
   void setWindowMode(WINDOW_MODE newWindowMode) override;
  //Cursor logic
   void changeCursorStyle(CURSOR_STYLE newCursorStyle) override;
