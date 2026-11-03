@@ -1,8 +1,11 @@
 #pragma once
 
 #include "../Utils/Debugger.h"
+
+#include <functional>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include <vulkan/vulkan.h>
 
@@ -89,14 +92,28 @@ private:
     =============================================================================*/
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
   VkPhysicalDeviceProperties physicalDeviceProperties{};
+
   //Selecting the physical device
   [[nodiscard]] VkPhysicalDevice scorePhysicalDevices(const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList) const;
   static bool checkRequiredPhysicalDeviceFeaturesSupport(const VkPhysicalDeviceFeatures &supportedCoreFeatures,const VkPhysicalDeviceVulkan13Features &supportedFeatures13);
+  //Scoring
+  struct PhysicalDeviceCandidate {
+    VkPhysicalDeviceProperties properties{};
+    VkPhysicalDeviceFeatures features{};
+  };
+  struct ScoreRule {
+    std::string name;
+    std::function<unsigned int(const PhysicalDeviceCandidate &)> evaluate;
+  };
+  static const std::vector<ScoreRule> physicalDeviceScoreRules;
+  static const std::unordered_map<VkPhysicalDeviceType, unsigned int> deviceTypeScores;
+
   //Features
   VkPhysicalDeviceFeatures physicalDeviceFeatures{};
   VkPhysicalDeviceVulkan13Features physicalDeviceFeatures13{};
   static std::vector<VkBool32 VkPhysicalDeviceFeatures::*> requiredFeatures;
   static std::vector<VkBool32 VkPhysicalDeviceVulkan13Features::*> requiredFeatures13;
+
 
   /*=============================================================================
     Queue families

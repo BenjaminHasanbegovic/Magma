@@ -1,6 +1,7 @@
 #include "../../../include/Magma/Vulkan/VulkanContext.h"
 #include "../../../include/Magma/Magma.h"
 #include <set>
+#include <unordered_map>
 #include <xcb/xcb.h>
 
 using namespace Magma;
@@ -19,7 +20,7 @@ std::vector<const char *> MVulkanContext::requiredLogicalDeviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 //Features
-std::vector<VkBool32 VkPhysicalDeviceFeatures::*>MVulkanContext::requiredFeatures{
+std::vector<VkBool32 VkPhysicalDeviceFeatures::*> MVulkanContext::requiredFeatures{
   &VkPhysicalDeviceFeatures::samplerAnisotropy,
   &VkPhysicalDeviceFeatures::independentBlend,
   &VkPhysicalDeviceFeatures::fillModeNonSolid,
@@ -27,9 +28,55 @@ std::vector<VkBool32 VkPhysicalDeviceFeatures::*>MVulkanContext::requiredFeature
   &VkPhysicalDeviceFeatures::geometryShader,
 
 };
-std::vector<VkBool32 VkPhysicalDeviceVulkan13Features::*>MVulkanContext::requiredFeatures13{
+std::vector<VkBool32 VkPhysicalDeviceVulkan13Features::*> MVulkanContext::requiredFeatures13{
   &VkPhysicalDeviceVulkan13Features::dynamicRendering,
   &VkPhysicalDeviceVulkan13Features::synchronization2,
+};
+
+//Scoring
+const std::unordered_map<VkPhysicalDeviceType, unsigned int>
+MVulkanContext::deviceTypeScores = {
+  {VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,   1000},
+  {VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,  500},
+  {VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU,     100},
+  {VK_PHYSICAL_DEVICE_TYPE_CPU,              10},
+};
+
+const std::vector<MVulkanContext::ScoreRule>
+MVulkanContext::physicalDeviceScoreRules = {
+  {.name = "device type",
+      .evaluate =
+             [](const PhysicalDeviceCandidate &c) {
+               const auto it = deviceTypeScores.find(c.properties.deviceType);
+               return it != deviceTypeScores.end() ? it->second : 0u;
+             }},
+
+ {.name = "maxImageDimension2D",
+     .evaluate =
+             [](const PhysicalDeviceCandidate &c) {
+               return c.properties.limits.maxImageDimension2D / 1000;
+             }},
+
+{.name = "maxSamplerAnisotropy",
+    .evaluate =
+             [](const PhysicalDeviceCandidate &c) {
+               return static_cast<unsigned int>(
+                          c.properties.limits.maxSamplerAnisotropy) *
+                      10;
+             }},
+
+{.name = "maxBoundDescriptorSets",
+    .evaluate =
+             [](const PhysicalDeviceCandidate &c) {
+               return c.properties.limits.maxBoundDescriptorSets;
+             }},
+
+
+{.name = "wideLines",
+    .evaluate =
+             [](const PhysicalDeviceCandidate &c) {
+               return c.features.wideLines ? 50u : 0u;
+             }},
 };
 
 /*=============================================================================
@@ -242,20 +289,20 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(
   VkPhysicalDevice suitablePhysicalDevice{VK_NULL_HANDLE};
 
   for (const auto physicalDeviceCandidate : scorablePhysicalDevicesList) {
-    unsigned int currentPhysicalDeviceScore{0};
-
     pDebugger->print("Scoring physical device . . .");
 
-    // Physical device properties.
+    unsigned int currentPhysicalDeviceScore{0};
+    //Properties.
     pDebugger->print("Getting the physical device properties . . .");
 
-    // Retrieving the properties of physical device
+    PhysicalDeviceCandidate candidate;
+
     VkPhysicalDeviceProperties candidatePhysicalDeviceProperties{};
     vkGetPhysicalDeviceProperties(physicalDeviceCandidate,
                                   &candidatePhysicalDeviceProperties);
+    candidate.properties = candidatePhysicalDeviceProperties;
     const std::string deviceName = candidatePhysicalDeviceProperties.deviceName;
-    const VkPhysicalDeviceType physicalDeviceType =
-        candidatePhysicalDeviceProperties.deviceType;
+    const VkPhysicalDeviceType physicalDeviceType = candidatePhysicalDeviceProperties.deviceType;
 
     pDebugger->print("Got the physical device properties, name: " + deviceName);
 
@@ -271,6 +318,7 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(
     candidateFeatures2.pNext = &candidateFeatures13;
 
     vkGetPhysicalDeviceFeatures2(physicalDeviceCandidate, &candidateFeatures2);
+    candidate.features = candidateFeatures2.features;
 
     pDebugger->print("Got the physical device features.");
 
@@ -282,41 +330,20 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(
       continue;
     };
 
-    pDebugger->print("Checked for required features . . .");
+    pDebugger->print("Checked for required features.");
 
-    {
-      auto checkOptionalPhysicalDevicePropertiesAndFeatures =
-          [this](const std::string &attributeName, const bool valueToCheck,
-                 const unsigned int pointToAdd) {
-            pDebugger->print("Checking " + attributeName + ". . .");
-            if (valueToCheck) {
-              pDebugger->print("The physical device has " + attributeName +
-                               "(score:+" + std::to_string(pointToAdd) + ").");
-              return pointToAdd;
-            } else {
-              pDebugger->print("The physical device does not have: " +
-                               attributeName);
-              return static_cast<unsigned int>(0);
-            }
-          };
-      currentPhysicalDeviceScore =
-          checkOptionalPhysicalDevicePropertiesAndFeatures(
-              "discrete GPU",
-              physicalDeviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
-              1000) +
-          checkOptionalPhysicalDevicePropertiesAndFeatures(
-              "maxImageDimension2D", true,
-              candidatePhysicalDeviceProperties.limits.maxImageDimension2D /
-                  1000) +
-          checkOptionalPhysicalDevicePropertiesAndFeatures(
-              "maxSamplerAnisotropy", true,
-              static_cast<unsigned int>(candidatePhysicalDeviceProperties.limits
-                                            .maxSamplerAnisotropy) *
-                  10) +
-          checkOptionalPhysicalDevicePropertiesAndFeatures(
-              "maxBoundDescriptorSets", true,
-              candidatePhysicalDeviceProperties.limits.maxBoundDescriptorSets);
-    }
+    for (const auto &rule : physicalDeviceScoreRules) {
+      const unsigned int points = rule.evaluate(candidate);
+      currentPhysicalDeviceScore += points;
+
+      if (points > 0) {
+        pDebugger->print("Rule '" + rule.name + "' gave +" + std::to_string(points) + ".");
+      } else {
+        pDebugger->print("Rule '" + rule.name + "' gave no points.");
+      };
+    };
+
+    pDebugger->print("Checked physical device properties.");
 
     // Compering scores
     if (currentPhysicalDeviceScore > maxPhysicalDeviceScore) {
@@ -329,8 +356,7 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(
                maxPhysicalDeviceScore != 0) {
       pDebugger->print("Physical device had a worst score: " +
                            std::to_string(maxPhysicalDeviceScore) +
-                           ",name: " + deviceName,
-                       MESSAGE_TYPE::INFO);
+                           ",name: " + deviceName,MESSAGE_TYPE::WARNING);
     };
   };
 
