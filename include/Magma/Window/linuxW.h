@@ -53,7 +53,7 @@ private:
   unsigned long int screen{0};
   Window window{};
   Atom wmDeleteMessage{0};
-  XEvent event;
+  XEvent event{};
 
   // Styling
   unsigned long backgroundColor{};

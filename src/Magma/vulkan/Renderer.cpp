@@ -34,13 +34,11 @@ MRenderer::~MRenderer() {
  /*=============================================================================
    Rendering
    =============================================================================*/
-
 void MRenderer::acquireNextImage() {
   vkAcquireNextImageKHR(logicalDevice, Swapchain,UINT64_MAX,semaphoreImageAvailable,syncHostWithDeviceFence, &imageIndex);
 };
 
 void MRenderer::drawFrame() const {
-
   VkSubmitInfo submitInfo = {};
   const VkSemaphore waitSemaphores[] = { semaphoreImageAvailable };
   const VkSemaphore signalSemaphores[] = { semaphoreRendererFinished };
@@ -101,13 +99,12 @@ void MRenderer::destroyFence() const {
   vkDestroyFence(logicalDevice, syncHostWithDeviceFence, nullptr);
 };
 
-
 void MRenderer::waitForFence() const {
   if (vkWaitForFences(logicalDevice, 1, &syncHostWithDeviceFence, VK_TRUE, UINT64_MAX) != VK_SUCCESS)
     throw std::runtime_error("Failed to wait for fence!");
 };
 
-void MRenderer::resetFence() {
+void MRenderer::resetFence() const {
   if (vkResetFences(logicalDevice, 1, &syncHostWithDeviceFence) != VK_SUCCESS) throw std::runtime_error("Failed to reset fence!");
 };
 

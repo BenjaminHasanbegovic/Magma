@@ -29,7 +29,7 @@ public:
   void createFence();
   void destroyFence() const;
   void waitForFence() const;
-  void resetFence();
+  void resetFence() const;
 
   /*=============================================================================
     Swapchain

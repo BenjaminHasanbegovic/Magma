@@ -81,16 +81,22 @@ private:
     =============================================================================*/
   VkDevice logicalDevice = VK_NULL_HANDLE;
   void destroyLogicalDevice();
-  static std::vector<const char *> logicalDeviceExtensions;
+  static std::vector<const char *> requiredLogicalDeviceExtensions;
+  void checkLogicalDeviceExtensionsSupport() const;
 
   /*=============================================================================
     Physical device
     =============================================================================*/
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
   VkPhysicalDeviceProperties physicalDeviceProperties{};
+  //Selecting the physical device
+  [[nodiscard]] VkPhysicalDevice scorePhysicalDevices(const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList) const;
+  static bool checkRequiredPhysicalDeviceFeaturesSupport(const VkPhysicalDeviceFeatures &supportedCoreFeatures,const VkPhysicalDeviceVulkan13Features &supportedFeatures13);
+  //Features
   VkPhysicalDeviceFeatures physicalDeviceFeatures{};
-  [[nodiscard]] VkPhysicalDevice scorePhysicalDevices(
-      const std::vector<VkPhysicalDevice> &scorablePhysicalDevicesList) const;
+  VkPhysicalDeviceVulkan13Features physicalDeviceFeatures13{};
+  static std::vector<VkBool32 VkPhysicalDeviceFeatures::*> requiredFeatures;
+  static std::vector<VkBool32 VkPhysicalDeviceVulkan13Features::*> requiredFeatures13;
 
   /*=============================================================================
     Queue families
@@ -104,6 +110,5 @@ private:
     Error handling
     =============================================================================*/
   void checkInstanceCreationErrors(VkResult result) const;
-  void checkVkLogicalDeviceExtensionsSupport() const;
 };
 }; // namespace Magma

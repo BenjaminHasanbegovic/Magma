@@ -2,6 +2,14 @@
 #include <thread>
 #include <chrono>
 
-namespace Magma {
 
-}
+
+namespace Magma {
+class ApplicationLoop {
+  public:
+  ApplicationLoop();
+  ~ApplicationLoop();
+private:
+};
+
+};
