@@ -411,6 +411,7 @@ void MRenderer::selectSurfaceFormat() {
         availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
       pDebugger->print("Selected optimal sRGB surface format.");
       surfaceFormat = availableFormat;
+      return;
         };
   };
 
@@ -433,7 +434,7 @@ void MRenderer::selectPresentMode() {
     if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
       surfacePresentMode = availablePresentMode;
       pDebugger->print("Selected present mode VK_PRESENT_MODE_MAILBOX_KHR.");
-      break;
+      return;
     };
   };
 
