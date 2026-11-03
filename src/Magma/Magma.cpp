@@ -41,7 +41,6 @@ void MInstance::start() {
     pVulkanContext->setSurface(pWindowHandler->getSurface());
 
     pVulkanContext->selectPhysicalDevice();
-    pVulkanContext->findMandatoryQueueFamilyIndexes();
     pVulkanContext->createLogicalDevice();
 
     pRenderer = new MRenderer(*pDebugger, pVulkanContext->getPhysicalDevice(),

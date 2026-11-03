@@ -48,7 +48,7 @@ public:
   /*=============================================================================
     Queue families
     =============================================================================*/
-  void findMandatoryQueueFamilyIndexes() const;
+  [[nodiscard]] bool findMandatoryQueueFamilyIndexes(VkPhysicalDevice device) const;
   [[nodiscard]] VkQueue getGraphicsQueue() const { return graphicsQueue; };
   [[nodiscard]] VkQueue getPresentQueue() const { return presentQueue; };
 

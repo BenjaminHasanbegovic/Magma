@@ -34,43 +34,34 @@ std::vector<VkBool32 VkPhysicalDeviceVulkan13Features::*> MVulkanContext::requir
 };
 
 //Scoring
-const std::unordered_map<VkPhysicalDeviceType, unsigned int>
-MVulkanContext::deviceTypeScores = {
+const std::unordered_map<VkPhysicalDeviceType, unsigned int> MVulkanContext::deviceTypeScores = {
   {VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,   1000},
   {VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,  500},
   {VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU,     100},
   {VK_PHYSICAL_DEVICE_TYPE_CPU,              10},
 };
-
-const std::vector<MVulkanContext::ScoreRule>
-MVulkanContext::physicalDeviceScoreRules = {
+const std::vector<MVulkanContext::ScoreRule> MVulkanContext::physicalDeviceScoreRules = {
   {.name = "device type",
       .evaluate =
-             [](const PhysicalDeviceCandidate &c) {
-               const auto it = deviceTypeScores.find(c.properties.deviceType);
+             [](const PhysicalDeviceCandidate &candidate) {
+               const auto it = deviceTypeScores.find(candidate.properties.deviceType);
                return it != deviceTypeScores.end() ? it->second : 0u;
              }},
-
- {.name = "maxImageDimension2D",
+{.name = "maxImageDimension2D",
      .evaluate =
-             [](const PhysicalDeviceCandidate &c) {
-               return c.properties.limits.maxImageDimension2D / 1000;
+             [](const PhysicalDeviceCandidate &candidate) {
+               return candidate.properties.limits.maxImageDimension2D / 1000;
              }},
-
 {.name = "maxSamplerAnisotropy",
     .evaluate =
-             [](const PhysicalDeviceCandidate &c) {
-               return static_cast<unsigned int>(
-                          c.properties.limits.maxSamplerAnisotropy) *
-                      10;
-             }},
-
+             [](const PhysicalDeviceCandidate &candidate) {
+               return static_cast<unsigned int>(candidate.properties.limits.maxSamplerAnisotropy) *10;
+}},
 {.name = "maxBoundDescriptorSets",
     .evaluate =
-             [](const PhysicalDeviceCandidate &c) {
-               return c.properties.limits.maxBoundDescriptorSets;
+             [](const PhysicalDeviceCandidate &candidate) {
+               return candidate.properties.limits.maxBoundDescriptorSets;
              }},
-
 
 {.name = "wideLines",
     .evaluate =
@@ -158,7 +149,6 @@ void MVulkanContext::setOSExtensions(
 void MVulkanContext::createLogicalDevice() {
   pDebugger->print("Creating logical device . . .");
 
-  // Values needed to create logical device
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
   const std::set<uint32_t> uniqueQueueFamilies = {
       graphicsQueueFamilyIndex.value(), presentQueueFamilyIndex.value()};
@@ -174,7 +164,7 @@ void MVulkanContext::createLogicalDevice() {
   deviceFeatures13.dynamicRendering = VK_TRUE;
   deviceFeatures13.synchronization2 = VK_TRUE;
 
-  // Getting the queue families
+  // Queue families
   for (const uint32_t queueFamily : uniqueQueueFamilies) {
     VkDeviceQueueCreateInfo queueCreateInfo{};
     queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -306,6 +296,9 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(
 
     pDebugger->print("Got the physical device properties, name: " + deviceName);
 
+    //Queue families
+    if (!findMandatoryQueueFamilyIndexes(physicalDeviceCandidate)) continue;
+
     // Physical device features.
     pDebugger->print("Getting the physical device features . . .");
 
@@ -332,14 +325,14 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(
 
     pDebugger->print("Checked for required features.");
 
-    for (const auto &rule : physicalDeviceScoreRules) {
-      const unsigned int points = rule.evaluate(candidate);
+    for (const auto &[name, evaluate] : physicalDeviceScoreRules) {
+      const unsigned int points = evaluate(candidate);
       currentPhysicalDeviceScore += points;
 
       if (points > 0) {
-        pDebugger->print("Rule '" + rule.name + "' gave +" + std::to_string(points) + ".");
+        pDebugger->print("Rule '" + name + "' gave +" + std::to_string(points) + ".");
       } else {
-        pDebugger->print("Rule '" + rule.name + "' gave no points.");
+        pDebugger->print("Rule '" + name + "' gave no points.");
       };
     };
 
@@ -359,9 +352,6 @@ VkPhysicalDevice MVulkanContext::scorePhysicalDevices(
                            ",name: " + deviceName,MESSAGE_TYPE::WARNING);
     };
   };
-
-  // Final scoring
-  pDebugger->print("Scored all physical devices.");
 
   if (suitablePhysicalDevice == VK_NULL_HANDLE) {
     throw std::runtime_error("Could not find a suitable physical device!");
@@ -389,15 +379,15 @@ bool MVulkanContext::checkRequiredPhysicalDeviceFeaturesSupport(
 /*=============================================================================
   Queue families
   =============================================================================*/
-void MVulkanContext::findMandatoryQueueFamilyIndexes() const {
+bool MVulkanContext::findMandatoryQueueFamilyIndexes(VkPhysicalDevice device) const {
   pDebugger->print("Finding the queue family indexes . . .");
 
   uint32_t queueFamilyCount{0};
 
-  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount,
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
                                            nullptr);
 std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
-  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount,
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
                                            queueFamilyProperties.data());
 
   for (uint32_t i = 0; i < queueFamilyCount; ++i) {
@@ -411,7 +401,7 @@ std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
 
     // Check for present queue
     VkBool32 presentSupport = false;
-    vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, pSurface,
+    vkGetPhysicalDeviceSurfaceSupportKHR(device, i, pSurface,
                                          &presentSupport);
     if (queueFamilyProperties[i].queueCount > 0 && presentSupport) {
       presentQueueFamilyIndex = i;
@@ -422,19 +412,14 @@ std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
     if (graphicsQueueFamilyIndex.has_value() &&
         presentQueueFamilyIndex.has_value()) {
       pDebugger->print("Found all needed queue families.");
-      break;
-    }
+      return true;
+        };
   };
 
-  // Error handling
-  if (!graphicsQueueFamilyIndex.has_value()) {
-    throw std::runtime_error(
-        "Couldn't find the graphics queue family!");
-  }
+  if (!graphicsQueueFamilyIndex.has_value()) pDebugger->print("No graphics queue families found.",MESSAGE_TYPE::WARNING);
+  if (!presentQueueFamilyIndex.has_value()) pDebugger->print("Couldn't find the present queue family!",MESSAGE_TYPE::WARNING);
 
-  if (!presentQueueFamilyIndex.has_value()) {
-    throw std::runtime_error("Couldn't find the present queue family!");
-  };
+  return false;
 };
 
 /*=============================================================================
