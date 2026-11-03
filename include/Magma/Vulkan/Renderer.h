@@ -17,14 +17,13 @@ public:
             VkQueue graphicsQueue,VkQueue presentQueue);
   ~MRenderer();
 
-
   /*=============================================================================
     Rendering
     =============================================================================*/
- [[nodiscard]] bool canRenderFrame() const {return updateFrames;};
-  void acquireNextImage();
+  [[nodiscard]] bool canRenderFrame() const {return updateFrames;};
+  [[nodiscard]] bool renderFrame();
   void drawFrame() const;
-  void presentFrame() const;
+  [[nodiscard]] VkResult presentFrame() const;
   //Fence logic
   void createFence();
   void destroyFence() const;
@@ -44,12 +43,6 @@ public:
   void destroyImageViews();
 
   /*=============================================================================
-    Framebuffer
-    =============================================================================*/
-  void createFramebuffers();
-  void destroyFramebuffers() const;
-
-  /*=============================================================================
     Surface
     =============================================================================*/
    void selectSurfaceFormat();
@@ -64,7 +57,7 @@ public:
   /*=============================================================================
     Command buffer
     =============================================================================*/
-  void createCommandBuffers();
+  void createCommandBuffer();
   void recordCommandBuffer() const;
 
   /*=============================================================================
@@ -73,11 +66,6 @@ public:
   void createSemaphores();
   void destroySemaphores() const;
 
-  /*=============================================================================
-    Render pass
-    =============================================================================*/
-  void createRenderPass();
-  void destroyRenderPass() const;
 
   /*=============================================================================
     Graphics pipeline
@@ -95,7 +83,7 @@ private:
   /*=============================================================================
     Rendering
     =============================================================================*/
- uint32_t imageIndex{1};
+  uint32_t imageIndex{1};
   bool updateFrames{true};
   VkFence syncHostWithDeviceFence{VK_NULL_HANDLE};
 
@@ -103,11 +91,14 @@ private:
      Swapchain
     =============================================================================*/
   VkSwapchainKHR Swapchain{VK_NULL_HANDLE};
-  std::vector<VkFramebuffer> swapchainFramebuffers;
   // Images
   unsigned int swapchainImageCount{2};
   std::vector<VkImage> swapchainImages;
   std::vector<VkImageView> swapchainImageViews;
+  static void transitionImage(VkCommandBuffer cmd, VkImage image,
+                                VkImageLayout oldLayout, VkImageLayout newLayout,
+                                VkPipelineStageFlags2 srcStage, VkAccessFlags2 srcAccess,
+                                VkPipelineStageFlags2 dstStage, VkAccessFlags2 dstAccess) ;
 
   /*=============================================================================
     Surface
@@ -124,8 +115,14 @@ private:
     Command pool
     =============================================================================*/
   VkCommandPool commandPool{VK_NULL_HANDLE};
-  std::vector<VkCommandBuffer> commandBuffers;
+
+
   VkRenderPass renderPass{VK_NULL_HANDLE};
+
+  /*=============================================================================
+    Command buffer
+    =============================================================================*/
+  VkCommandBuffer commandBuffer{VK_NULL_HANDLE};
 
   /*=============================================================================
     Semaphores
@@ -154,7 +151,6 @@ private:
   VkShaderModule fragShaderModule{VK_NULL_HANDLE};
   VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
   VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-
 
   /*=============================================================================
     Debugging

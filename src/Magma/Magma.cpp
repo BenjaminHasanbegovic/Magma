@@ -52,19 +52,14 @@ void MInstance::start() {
     pRenderer->createSwapchain();
     pRenderer->createImageViews();
 
-    pRenderer->createRenderPass();
-    pRenderer->createFramebuffers();
-
     pRenderer->createCommandPool(MVulkanContext::getGraphicsQueueFamilyIndex());
+    pRenderer->createCommandBuffer();
 
-    pRenderer->createCommandBuffers();
     pRenderer->createGraphicsPipeline();
     pRenderer->createSemaphores();
     pRenderer->createFence();
-    pRenderer->recordCommandBuffer();
 
     isRunning = true;
-    pWindowHandler->changeCursorStyle(CURSOR_STYLE::POINTER);
     pDebugger->print("Created magma instance.");
     stopPerformanceTestTimer();
     startMainCallbackLoop();
@@ -117,38 +112,23 @@ void MInstance::destroy() {
 
 void MInstance::startMainCallbackLoop() {
   pDebugger->print("Starting main loop . . .");
-
-  pRenderer->acquireNextImage();
-
+  pWindowHandler->changeCursorStyle(CURSOR_STYLE::POINTER);
   while (isRunning) {
-
     pWindowHandler->pollEvents(isRunning);
-pRenderer->waitForFence();
+
+    const uint32_t width  = pWindowHandler->getWidth();
+    const uint32_t height = pWindowHandler->getHeight();
+    if (width == 0 || height == 0) continue;
 
     if (pWindowHandler->resized) {
-      pRenderer->setExtent(pWindowHandler->getWidth(), pWindowHandler->getHeight());
+      pRenderer->setExtent(width, height);
       pRenderer->recreateSwapchain();
-      pRenderer->recordCommandBuffer();
-      pRenderer->acquireNextImage();
-      if (windowSize[0] == 0 || windowSize[1] == 0) {
-        continue;
-      }else {
-        pWindowHandler->resized = false;
-      };
-    };
+      pWindowHandler->resized = false;
+    }
 
-    pRenderer->resetFence();
-
-    if (pRenderer->canRenderFrame()) {
-      pRenderer->drawFrame();
-      pRenderer->presentFrame();
-      pRenderer->acquireNextImage();
-    };
-
+    if (pRenderer->renderFrame()) pWindowHandler->resized = true;
   };
-
   pDebugger->print("Main loop ended.");
-
 };
 
 /*=============================================================================
